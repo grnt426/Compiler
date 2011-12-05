@@ -1,0 +1,4 @@
+varone = 5;
+vartwo = 9;
+result = varone + vartwo;
+HALT;
