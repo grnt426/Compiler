@@ -22,22 +22,24 @@
 #define SPACE		' '
 
 typedef struct{
-	char * varname;
+	char *varname;
 	unsigned char value;
 } Symbol;
 
 typedef struct{
-	Symbol ** sym_array;
+	Symbol **sym_array;
 	unsigned int total_symbols;
 } SymbolTable;
 
-typedef struct{
-	char term;
-	struct Term ** child_terms;
-} Term;
+struct Term{
+	char* term;
+	struct Term **child_terms;
+};
 
 typedef struct{
 	unsigned short line_count;
+	unsigned short has_error;
+	char *err_msg;
 } ProgramData;
 
 
@@ -46,7 +48,8 @@ void 	printEqualsSeparator();
 int 	checkOpenFile(const char*);
 void 	getInputFile();
 char 	readNonEmptyChar(FILE *, ProgramData *);
-
+int consumeUntil(FILE * input, char * buf, const unsigned int buf_size, 
+		const char term_char, ProgramData *prog);
 
 // Symbol Table Manipulation Functions
 int 	symbolExists(const char*, const SymbolTable *);
@@ -58,7 +61,7 @@ int		getNextSymbol(char *);
 
 
 // Productions
-void 	ifStatement(Term *, FILE *, ProgramData *);
+void 	ifStatement(struct Term *, FILE *, ProgramData *);
 
 
 // Error Handling
@@ -66,7 +69,9 @@ void 	reportCompilerError(char *, ProgramData *);
 
 
 // Term Manipulation Functions
-
+void 	addChildTerm(struct Term *, struct Term *);
+struct Term* 	createTerm(char* term, unsigned int term_len);
+struct Term* 	createSingleCharTerm(const char term);
 
 int main(){
 
@@ -81,7 +86,7 @@ int main(){
 	printf("Processing '%s' for compilation...\n", file);
 	
 	// build Symbol Table
-	SymbolTable * sym_tbl;
+	SymbolTable *sym_tbl;
 	sym_tbl = (SymbolTable *) calloc(1, sizeof(SymbolTable));
 	sym_tbl -> sym_array = (Symbol **) calloc(10, sizeof(Symbol *));
 	
@@ -94,7 +99,7 @@ void printEqualsSeparator(){
 	printf("==============================\n");
 }
 
-void getInputFile(char * file){
+void getInputFile(char *file){
 	printf("Input File: ");
 	scanf("%s[64]", file);
 	while(!checkOpenFile(file)){
@@ -103,8 +108,8 @@ void getInputFile(char * file){
 	}
 }
 
-int checkOpenFile(const char* filename){
-	FILE * file;
+int checkOpenFile(const char *filename){
+	FILE *file;
 	if(file = fopen(filename, "r")){
 		fclose(file);
 		return 1;
@@ -112,7 +117,7 @@ int checkOpenFile(const char* filename){
 	return 0;
 }
 
-int symbolExists(const char * symbol, const SymbolTable * sym_tbl){
+int symbolExists(const char *symbol, const SymbolTable *sym_tbl){
 	for(int i = 0; i < MAX_VARS; ++i){
 		if(strcmp(symbol, sym_tbl -> sym_array[i] -> varname) == 0)
 			return 1;
@@ -120,8 +125,8 @@ int symbolExists(const char * symbol, const SymbolTable * sym_tbl){
 	return 0;
 }
 
-int tryAddSymbol(char* varname, const unsigned char value, 
-		SymbolTable * sym_tbl){
+int tryAddSymbol(char *varname, const unsigned char value, 
+		SymbolTable *sym_tbl){
 		
 	// vars
 	Symbol * symbol;
@@ -141,7 +146,7 @@ int tryAddSymbol(char* varname, const unsigned char value,
 	}
 }
 
-int parseFile(const char * filename){
+int parseFile(const char *filename){
 	FILE * fileh = fopen(filename, "r");
 	if(!fileh){
 		fprintf(stderr, "Unable to open file '%s'...what happened?", filename);
@@ -172,35 +177,79 @@ int parseFile(const char * filename){
 	}
 }
 
-int getNextSymbol(char * buffer){
+int getNextSymbol(char *buffer){
 
 }
 
 /**
  * Production:
- * 		stmt -> 'IF_IDEN' 'PAREN_S' expr 'PAREN_E' 'BRACE_S' 
-			stmt 'BRACE_E'
+ * 		stmt -> 'IF_IDEN' 'PAREN_S' expr 'PAREN_E' 'BRACE_S' stmt 'BRACE_E'
  */
-void ifStatement(Term * term, FILE * input, ProgramData * prog){
+void ifStatement(struct Term *term, FILE *input, ProgramData *prog){
 	
 	// vars
 	char value;
-	char misc[64];
-	Term * new_term;
+	const unsigned int buf_size = 64;
+	char misc_buf[buf_size];
+	struct Term * new_term;
 	
 	// The 'IF_IDEN' terminal has already been consumed, process all else
 	value = readNonEmptyChar(input, prog);
 	if(value == PAREN_S){
-		new_term = (Term *) calloc(1, sizeof(Term));
-		
+		addChildTerm(createSingleCharTerm(PAREN_S), term);
 	}
+	else{
+		// produce error
+	}
+	
+	// consume the expression until the 'PAREN_E' is found
+	if(consumeUntil(input, misc_buf, buf_size, PAREN_E, prog) == -1){
+		// produce error
+	}
+	
+	// produce a Term for the expression, then attempt to parse it
+	addChildTerm(createTerm(misc_buf, buf_size), term);
+	
+	// parse statement within the if-statement
+	// STUB
+	
+	// check parsed statement
+	if(prog->has_error)
+		return; // someone beneath us failed
+	
+	// add the closing parenthesis
+	addChildTerm(createSingleCharTerm(PAREN_S), term);
+	
+	// next, consume the 'BRACE_S' indentifier
+	value = readNonEmptyChar(input, prog);
+	if(value == PAREN_S){
+		addChildTerm(createSingleCharTerm(BRACE_S), term);
+	}
+	else{
+		// produce error
+	}
+	
+	// consume the following statement
+	
+	
+	// consume the final indentifier, 'BRACE_E'
+	
+	
+}
+
+void addChildTerm(struct Term *child, struct Term *parent){
+	int i = 0;
+	while(parent->child_terms[i] != NULL){
+		++i;
+	}
+	parent->child_terms[i] = child; // the compiler throws a warning?
 }
 
 void reportCompilerError(char * err_msg, ProgramData * prog){
 	
 }
 
-char readNonEmptyChar(FILE * input, ProgramData * prog){
+char readNonEmptyChar(FILE *input, ProgramData *prog){
 	
 	// vars
 	char c [2];
@@ -220,4 +269,28 @@ char readNonEmptyChar(FILE * input, ProgramData * prog){
 			break;
 	}
 	return *c;
+}
+
+int consumeUntil(FILE *input, char *buf, const unsigned int buf_size, 
+		const char term_char, ProgramData *prog){
+	int chars_read = 0;
+	while(chars_read < buf_size){
+		buf[chars_read] = readNonEmptyChar(input, prog);
+		chars_read++;
+		if(buf[chars_read-1] == term_char)
+			return chars_read;
+	}
+	return -1;
+}
+
+struct Term* createTerm(char* term, unsigned int term_len){
+	struct Term * new_term = (struct Term *) calloc(1, sizeof(struct Term));
+	strncpy(new_term->term, term, term_len);
+	return new_term;
+}
+
+struct Term* createSingleCharTerm(const char term){
+	struct Term * new_term = (struct Term *) calloc(1, sizeof(struct Term));
+	new_term->term[0] = term;
+	return new_term;
 }
