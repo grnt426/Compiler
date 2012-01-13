@@ -10,7 +10,7 @@
 int main(int argc, char **argv){
 	
 	// perform sanity check on arguments
-	if(argc < 2 || argc > 3){
+	if(argc < 3 || argc > 4){
 		fprintf(stderr, "Usage: translator <input_file> [target_exe]\n");
 		return 1;
 	}
@@ -24,10 +24,7 @@ int main(int argc, char **argv){
 				argv[1]);
 		return 2;
 	}
-	if(argc == 3)
-		out_file = open_write_file(argv[2]);
-	else
-		out_file = open_write_file(strcat(argv[1], ".out"));
+	out_file = open_write_file(argv[2]);
 	if(!out_file)
 		return 2;
 	
@@ -42,8 +39,18 @@ int main(int argc, char **argv){
 			"\tMax One Instruction Per Line\n",
 			MAX_MEMORY, MAX_REGS, MAX_CACHE, MAX_LINE_LEN);
 	
+	// setup our program struct to store some data
+	struct program *program = (struct program*) malloc(sizeof(struct program));
+	memset(program, 0, sizeof(struct program));
+	program->line_count = 0;
+	program->out = out_file;
+	program->input = argv[1];
+	program->in = input_file;
+	
 	// start processing file
-	process_file(input_file, out_file);
+	process_input_program(program);
+	fclose(input_file);
+	fclose(out_file);
 	
 	printf("\nDone.\n");
 }
@@ -58,73 +65,88 @@ FILE *open_write_file(const char *file){
 	return out_file;
 }
 
-void process_file(FILE *input, FILE *out){
+void process_input_program(struct program *program){
 	
 	printf("\nProcessing File...\n");
-	
+	char *tok;
 	char buf[MAX_LINE_LEN+1];
 	buf[MAX_LINE_LEN] = 0;
-	char *tok;
-	struct program *program = (struct program*) malloc(sizeof(struct program));
-	memset(program, 0, sizeof(struct program));
-	program->line_count = 0;
-	program->out = out;
 	
 	do{
 		program->line_count++;
 		#ifdef DEBUG
-			fprintf(stderr, "\tReading Line %d...\n", program->line_count);
+			fprintf(stderr, "*** Reading Line %d...\n", program->line_count);
+		#endif
+		short ret = fgetpos(program->in, &program->str_line);
+		#ifdef DEBUG
+			fprintf(stderr, "LINE POS: '%p' RET VAL: '%d'\n", 
+					&(program->str_line), ret);
+		#endif
+		tok = read_next_token(buf, program->in, MAX_LINE_LEN);
+		
+		#ifdef DEBUG
+			fprintf(stderr, "Read Token '%s' '%d'\n", tok, strcmp(tok, "NOT"));
 		#endif
 		
-		fgets(buf, MAX_LINE_LEN, input);
-		trimwhitespace(buf);
-		tok = strtok(buf, STR_TOK_SEP);
-		strtolower(tok, strlen(tok));
-		#ifdef DEBUG
-			printf("Read Token '%s'\n", tok);
-		#endif
+		if(!tok){
+			continue;	// just a whitespace line, move on
+		}
 		
 		// the first token should contain our instruction
 		if(!strcmp(tok, "HALT")){
 			process_halt(program);
 		}
+		else if(!strcmp(tok, "NOT")){
+			process_not(program);
+		}
 		
-		// first, see if the instruction generated any errors
-		if(program->error_code == GARBAGE){
-			// something bad?
+		// looks like a bad opcode
+		else{
+			#ifdef DEBUG
+				fprintf(stderr, "BAD CODE '%s'\n", tok);
+			#endif
+			print_unexpected_ident(tok, program);
 		}
 		
 		// the instruction processor should have consumed all relevant tokens,
 		// check if there is garbage at the end of the line
 		check_garbage(program);
-		
-	}while(!check_EOF(input) && !program->error_code);
+	}while(!check_EOF(program->in) && !program->error_code);
 	
 	#ifdef DEBUG
 		// why did we quit?
 		if(program->error_code){
 			fprintf(stderr, "Stopped processing because of an error.\n");
 		}
-		else if(check_EOF(input)){
+		else if(check_EOF(program->in)){
 			fprintf(stderr, "Stopped processing because EOF reached.\n");
 		}
 	#endif
 }
 
-short process_halt(struct program *prog){
+void process_halt(struct program *prog){
 	#ifdef DEBUG
-		printf("HALT instruction read...\n");
+		fprintf(stderr, "HALT instruction read...\n");
 	#endif
 	write_str(HALT, prog->out);
 }
 
+void process_not(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "NOT instruction read...\n");
+	#endif
+	short src = read_src_reg(prog);
+	short dst = read_dst_reg(prog);
+	write_instruc_str(NOT, src, 0, dst, "", prog);
+}
+
 void check_garbage(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "Checking for garbage at EOL...\n");
+	#endif
 	char *tok;
 	if(tok = strtok(0, STR_TOK_SEP)){
-		print_compiler_error(prog);
-		fprintf(stderr, "Unexpected Identifier '%s'.\n", tok, 
-			prog->line_count);
-		prog->error_code = GARBAGE;
+		print_unexpected_ident(tok, prog);
 	}
 }
 
@@ -134,10 +156,26 @@ void write_str(char *str, FILE *out){
 }
 
 void print_compiler_error(struct program *prog){
-	fprintf(stderr, "Error (line %d): ", prog->line_count);
+	fprintf(stderr, "%s: %d:\n", prog->input, prog->line_count);
+	fsetpos(prog->in, &prog->str_line);
+	char buf[MAX_LINE_LEN+1];
+	buf[MAX_LINE_LEN] = 0;
+	fgets(buf, MAX_LINE_LEN, prog->in);
+	trimwhitespace(buf);
+	fprintf(stderr, "\t'%s'\n", buf);
 }
 
-// void print_unexpected(char *token
+void print_unexpected_ident(char *ident, struct program *prog){
+	print_compiler_error(prog);
+	fprintf(stderr, "\tUnexpected Identifier '%s'.\n", ident);
+	prog->error_code = GARBAGE;
+}
+
+void print_expected_ident(char *ident, char *expected, struct program *prog){
+	print_compiler_error(prog);
+	fprintf(stderr, "Expected '%s' but found '%s'.\n", expected, ident);
+	prog->error_code = GARBAGE;
+}
 
 short check_EOF(FILE *file){
 	int c = fgetc(file);
@@ -145,6 +183,36 @@ short check_EOF(FILE *file){
 		return 1;
 	ungetc(c, file);
 	return 0;
+}
+
+short read_src_reg(struct program *prog){
+	char *tok = read_reg(prog);
+	short reg = 0;
+	if(tok[1] != 'S' || !(reg = atoi(tok+2)) || reg > MAX_REGS || 
+			reg < 1){
+		print_expected_ident(tok, "$Sx", prog);
+	}
+	return reg;
+}
+
+short read_dst_reg(struct program *prog){
+	return 1;
+}
+
+char *read_reg(struct program *prog){
+	char * tok = strtok(0, ", ");
+	
+	// should only be 3 characters (may change, but sufficient for now)
+	if(strlen(tok) != 3 || tok[0] != '$'){
+		print_expected_ident(tok, "$", prog);
+		tok = 0;
+	}
+	return tok;
+}
+
+void write_instruc_str(char *str, short s1, short s2, short dest, char *misc,
+		struct program *prog){
+	
 }
 
 /**
@@ -164,10 +232,16 @@ void trimwhitespace(char *s){
 	memmove(s, p, l + 1);
 }
 
-void strtolower(char *str, int len){
-	static int diff = 'a' - 'A';
+void strtoupper(char *str, int len){
 	while(len){
-		tolower(str[len-1]);
+		str[len-1] = toupper(str[len-1]);
 		len--;
 	}
+}
+
+char *read_next_token(char *buf, FILE *input, int buf_size){
+	fgets(buf, buf_size, input);
+	trimwhitespace(buf);
+	strtoupper(buf, strlen(buf));
+	return strtok(buf, STR_TOK_SEP);
 }

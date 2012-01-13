@@ -3,18 +3,18 @@ Word: One Byte
 A Single rotation is One Word
 
 Two Registers:
-Register One: $0 (0)
-Register Two: $1 (1)
+Register One: $1 (1)
+Register Two: $2 (2)
 
 Single ALU Input Operation Source Limitations:
-Source Range	: $0
+Source Range		: $1
 
 Multi ALU Input Operation Source Range:
-Source Range		: $0/$1
-Source 2 Range		: $0/$1
+Source Range		: $1/$2
+Source 2 Range		: $1/$2
 
 ALU Ouput Result Destination Range:
-Destination Range	: $0/$1
+Destination Range	: $1/$2
 
 ALU Instructions:
 	NOT <000>

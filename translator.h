@@ -11,8 +11,8 @@
 
 // Machine Constraints
 #define MAX_REGS		2
-#define REG_ZERO		"$0"
 #define REG_ONE			"$1"
+#define REG_TWO			"$2"
 #define MAX_MEMORY		28
 #define MAX_CACHE		6
 #define MAX_LINE_LEN	32
@@ -42,26 +42,42 @@
 
 struct program{
 	FILE *out;
+	FILE *in;
+	char *input;
+	fpos_t str_line;
 	unsigned short line_count;
 	short error_code;
 	char *err_str;
 };
 
 // Compilation Functions
-void process_file(FILE *input, FILE *out);
-void print_compiler_error(struct program *prog);
+void process_input_program(struct program *prog);
 
-// Program Output Functions
+// Program File Output Functions
 void write_str(char *str, FILE *out);
+void write_instruc_str(char *str, short s1, short s2, short dest, char *misc,
+		struct program *prog);
 
 // Instruction Processing Fucntions
-short process_halt(struct program *prog);
+void process_halt(struct program *prog);
+void process_not(struct program *prog);
+
+// Register Processing Instructions
+short read_src_reg(struct program *prog);
+short read_dst_reg(struct program *prog);
+char *read_reg(struct program *prog);
+
+// Error Handling Functions
 void check_garbage(struct program *prog);
+void print_compiler_error(struct program *prog);
+void print_unexpected_ident(char *ident, struct program *prog);
+void print_expected_ident(char *ident, char *expected, struct program * prog);
 
 // Miscellaneous File/String Manipulators
 FILE *open_write_file(const char *file);
 void trimwhitespace(char *string);
-void strtolower(char *str, int len);
+void strtoupper(char *str, int len);
 short check_EOF(FILE *file);
+char *read_next_token(char *buf, FILE *input, int buf_size);
 
 #endif
