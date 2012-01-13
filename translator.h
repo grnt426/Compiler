@@ -16,6 +16,7 @@
 #define MAX_MEMORY		28
 #define MAX_CACHE		6
 #define MAX_LINE_LEN	32
+#define WORD_SIZE		7
 
 // (Real) Instructions
 //		Name	Code	Ext. Code	Description
@@ -28,11 +29,11 @@
 #define	SW		"0110"				// store word to cache
 #define	LW		"0111"				// load word from cache into $dest
 #define	BEZ		"1000"				// branch if $source equal to zero
-#define ROT1	"1001	000"		// increase cache index by one
-#define	ROT		"1001	1"			// increase cache index by $source
+#define ROT1	"1001000"			// increase cache index by one
+#define	ROT		"10011"				// increase cache index by $source
 #define	JMP		"1010"				// move memory pointer by $source
-#define HALT	"1111	000"		// stops all processing
-#define NOP		"1111	001"		// consumes a cycle
+#define HALT	"1111000"			// stops all processing
+#define NOP		"1111001"			// consumes a cycle
 
 // String Processing Constants
 #define	STR_TOK_SEP		" \n"

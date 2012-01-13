@@ -88,7 +88,7 @@ void process_input_program(struct program *program){
 		tok = read_next_token(buf, program->in, MAX_LINE_LEN);
 		
 		#ifdef DEBUG
-			fprintf(stderr, "Read Token '%s' '%d'\n", tok);
+			fprintf(stderr, "Read Token '%s'\n", tok);
 		#endif
 		
 		if(!tok){
@@ -166,8 +166,7 @@ void check_garbage(struct program *prog){
  * Simply writes the given string to the given file in a standardized format.
  */
 void write_str(char *str, FILE *out){
-	fputs(str, out);
-	fputs("\n", out);
+	fprintf(out, "%s\n", str);
 }
 
 /**
@@ -202,7 +201,7 @@ void print_unexpected_ident(char *ident, struct program *prog){
  */
 void print_expected_ident(char *ident, char *expected, struct program *prog){
 	print_compiler_error(prog);
-	fprintf(stderr, "Expected '%s' but found '%s'.\n", expected, ident);
+	fprintf(stderr, "\tExpected '%s' but found '%s'.\n", expected, ident);
 	prog->error_code = GARBAGE;
 }
 
@@ -241,7 +240,13 @@ short read_src_reg(struct program *prog){
  * rejected if all 3 characters are not of the given format.
  */
 short read_dst_reg(struct program *prog){
-	return 1;
+	char *tok = read_reg(prog);
+	short reg = 0;
+	if(tok[1] != 'D' || !(reg = atoi(tok+2)) || reg > MAX_REGS || 
+			reg < 1){
+		print_expected_ident(tok, "$Dx", prog);
+	}
+	return reg;
 }
 
 /**
@@ -267,7 +272,20 @@ char *read_reg(struct program *prog){
  */
 void write_instruc_str(char *str, short s1, short s2, short dest, char *misc,
 		struct program *prog){
-	
+	int total = 0;
+	total = fprintf(prog->out, "%s", str);
+	if(s1)
+		total += fprintf(prog->out, "%d", s1);
+	if(s2)
+		total += fprintf(prog->out, "%d", s2);
+	if(dest)
+		total += fprintf(prog->out, "%d", dest);
+	total += fprintf(prog->out, "%s", misc);
+	while(total < WORD_SIZE){
+		fprintf(prog->out, "%d", 0);
+		total++;
+	}
+	fprintf(prog->out, "\n");
 }
 
 /**
