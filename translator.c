@@ -102,6 +102,42 @@ void process_input_program(struct program *program){
 		else if(!strcmp(tok, "NOT")){
 			process_not(program);
 		}
+		else if(!strcmp(tok, "SHL")){
+			process_shl(program);
+		}
+		else if(!strcmp(tok, "SHR")){
+			process_shr(program);
+		}
+		else if(!strcmp(tok, "OR")){
+			process_or(program);
+		}
+		else if(!strcmp(tok, "AND")){
+			process_and(program);
+		}
+		else if(!strcmp(tok, "ADD")){
+			process_add(program);
+		}
+		else if(!strcmp(tok, "SW")){
+			process_sw(program);
+		}
+		else if(!strcmp(tok, "LW")){
+			process_lw(program);
+		}
+		else if(!strcmp(tok, "BEZ")){
+			process_bez(program);
+		}
+		else if(!strcmp(tok, "ROT")){
+			process_rot(program);
+		}
+		else if(!strcmp(tok, "ROT1")){
+			process_rot1(program);
+		}
+		else if(!strcmp(tok, "JMP")){
+			process_jmp(program);
+		}
+		else if(!strcmp(tok, "NOP")){
+			process_nop(program);
+		}
 		
 		// looks like a bad opcode
 		else{
@@ -113,7 +149,8 @@ void process_input_program(struct program *program){
 		
 		// the instruction processor should have consumed all relevant tokens,
 		// check if there is garbage at the end of the line
-		check_garbage(program);
+		if(!program->error_code)
+			check_garbage(program);
 	}while(!check_EOF(program->in) && !program->error_code);
 	
 	#ifdef DEBUG
@@ -145,8 +182,151 @@ void process_not(struct program *prog){
 		fprintf(stderr, "NOT instruction read...\n");
 	#endif
 	short src = read_src_reg(prog);
+	if(!src)
+		return;
 	short dst = read_dst_reg(prog);
+	if(!dst)
+		return;
 	write_instruc_str(NOT, src, 0, dst, "", prog);
+}
+
+void process_shl(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "Shift Left instruction read...\n");
+	#endif
+	short src = read_src_reg(prog);
+	if(!src)
+		return;
+	short dst = read_dst_reg(prog);
+	if(!dst)
+		return;
+	write_instruc_str(SHL, src, 0, dst, "", prog);
+}
+
+void process_shr(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "Shift Right instruction read...\n");
+	#endif
+	short src = read_src_reg(prog);
+	if(!src)
+		return;
+	short dst = read_dst_reg(prog);
+	if(!dst)
+		return;
+	write_instruc_str(SHR, src, 0, dst, "", prog);
+}
+
+void process_or(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "Or instruction read...\n");
+	#endif
+	short src, src2, dst;
+	src = read_src_reg(prog);
+	if(!src)
+		return;
+	src2 = read_src_reg(prog);
+	if(!src2)
+		return;
+	dst = read_dst_reg(prog);
+	if(!dst)
+		return;
+	write_instruc_str(SHR, src, src2, dst, "", prog);
+}
+
+void process_and(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "And instruction read...\n");
+	#endif
+	short src = read_src_reg(prog);
+	if(!src)
+		return;
+	short src2 = read_src_reg(prog);
+	if(!src2)
+		return;
+	short dst = read_dst_reg(prog);
+	if(!dst)
+		return;
+	write_instruc_str(SHR, src, src2, dst, "", prog);
+}
+
+void process_add(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "Add instruction read...\n");
+	#endif
+	short src = read_src_reg(prog);
+	if(!src)
+		return;
+	short src2 = read_src_reg(prog);
+	if(!src2)
+		return;
+	short dst = read_dst_reg(prog);
+	if(!dst)
+		return;
+	write_instruc_str(ADD, src, src2, dst, "", prog);
+}
+
+void process_sw(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "Store Word instruction read...\n");
+	#endif
+	short src = read_src_reg(prog);
+	if(!src)
+		return;
+	write_instruc_str(SW, src, 0, 0, "", prog);
+}
+
+void process_lw(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "Load Word instruction read...\n");
+	#endif
+	short dst = read_dst_reg(prog);
+	if(!dst)
+		return;
+	write_instruc_str(LW, 0, 0, dst, "", prog);
+}
+
+void process_bez(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "Branch When Equal to Zero instruction read...\n");
+	#endif
+	short src = read_src_reg(prog);
+	if(!src)
+		return;
+	write_instruc_str(BEZ, src, 0, 0, "", prog);
+}
+
+void process_rot(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "Move Cache Index instruction read...\n");
+	#endif
+	short src = read_src_reg(prog);
+	if(!src)
+		return;
+	write_instruc_str(ROT, src, 0, 0, "", prog);
+}
+
+void process_rot1(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "Move Cache Index Once instruction read...\n");
+	#endif
+	write_str(ROT1, prog->out);
+}
+
+void process_jmp(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "Jump instruction read...\n");
+	#endif
+	short src = read_src_reg(prog);
+	if(!src)
+		return;
+	write_instruc_str(JMP, src, 0, 0, "", prog);
+}
+
+void process_nop(struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "No Operation instruction read...\n");
+	#endif
+	write_str(NOP, prog->out);
 }
 
 /**
@@ -256,6 +436,7 @@ short read_dst_reg(struct program *prog){
  */
 char *read_reg(struct program *prog){
 	char * tok = strtok(0, ", ");
+	trimwhitespace(tok);
 	
 	// should only be 3 characters (may change, but sufficient for now)
 	if(strlen(tok) != 3 || tok[0] != '$'){
@@ -273,19 +454,56 @@ char *read_reg(struct program *prog){
 void write_instruc_str(char *str, short s1, short s2, short dest, char *misc,
 		struct program *prog){
 	int total = 0;
+	char *buf = 0;
 	total = fprintf(prog->out, "%s", str);
-	if(s1)
-		total += fprintf(prog->out, "%d", s1);
-	if(s2)
-		total += fprintf(prog->out, "%d", s2);
-	if(dest)
-		total += fprintf(prog->out, "%d", dest);
+	if(s1){
+		buf = conv_reg_to_str(buf, s1);
+		total += fprintf(prog->out, "%s", buf);
+	}
+	if(s2){
+		buf = conv_reg_to_str(buf, s2);
+		total += fprintf(prog->out, "%s", buf);
+	}
+	if(dest){
+		buf = conv_reg_to_str(buf, dest);
+		total += fprintf(prog->out, "%s", buf);
+	}
 	total += fprintf(prog->out, "%s", misc);
+	free(buf);
 	while(total < WORD_SIZE){
 		fprintf(prog->out, "%d", 0);
 		total++;
 	}
 	fprintf(prog->out, "\n");
+}
+
+/**
+ * Given a base-10 number, the provided buf will have its contents filled with 
+ * a binary string representative of the given base-10 value. Note, if the
+ * provided string buffer is not of the appropriate size the buffer is
+ * automatically freed and reallocated.
+ */
+char *conv_reg_to_str(char *buf, short reg){
+	int char_count = log10(MAX_REGS)/log10(2);
+	#ifdef DEBUG
+		fprintf(stderr, "%p\n", buf);
+	#endif
+	if(!buf || strlen(buf) != char_count){
+		if(buf)
+			free(buf);
+		buf = (char*) malloc(char_count);
+	}
+	
+	// all register values start at 1, so let's fix that
+	reg--;
+	do{
+		if(reg%2)
+			buf[char_count-1] = '1';
+		else
+			buf[char_count-1] = '0';
+		char_count--;
+	}while(char_count);
+	return buf;
 }
 
 /**
