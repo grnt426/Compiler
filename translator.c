@@ -68,6 +68,7 @@ FILE *open_write_file(const char *file){
 	return out_file;
 }
 
+
 /**
  * Given a program struct, will process the (already opened) input file and
  * begin compilation line by line.
@@ -94,57 +95,8 @@ void process_input_program(struct program *program){
 		if(!tok){
 			continue;	// just a whitespace line, move on
 		}
-		
-		// the first token should contain our instruction
-		if(!strcmp(tok, "HALT")){
-			process_halt(program);
-		}
-		else if(!strcmp(tok, "NOT")){
-			process_not(program);
-		}
-		else if(!strcmp(tok, "SHL")){
-			process_shl(program);
-		}
-		else if(!strcmp(tok, "SHR")){
-			process_shr(program);
-		}
-		else if(!strcmp(tok, "OR")){
-			process_or(program);
-		}
-		else if(!strcmp(tok, "AND")){
-			process_and(program);
-		}
-		else if(!strcmp(tok, "ADD")){
-			process_add(program);
-		}
-		else if(!strcmp(tok, "SW")){
-			process_sw(program);
-		}
-		else if(!strcmp(tok, "LW")){
-			process_lw(program);
-		}
-		else if(!strcmp(tok, "BEZ")){
-			process_bez(program);
-		}
-		else if(!strcmp(tok, "ROT")){
-			process_rot(program);
-		}
-		else if(!strcmp(tok, "ROT1")){
-			process_rot1(program);
-		}
-		else if(!strcmp(tok, "JMP")){
-			process_jmp(program);
-		}
-		else if(!strcmp(tok, "NOP")){
-			process_nop(program);
-		}
-		
-		// looks like a bad opcode
 		else{
-			#ifdef DEBUG
-				fprintf(stderr, "BAD CODE '%s'\n", tok);
-			#endif
-			print_unexpected_ident(tok, program);
+			process_token(tok, program);
 		}
 		
 		// the instruction processor should have consumed all relevant tokens,
@@ -164,169 +116,80 @@ void process_input_program(struct program *program){
 	#endif
 }
 
-/**
- * Halt Instruction Processor.
- */
-void process_halt(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "HALT instruction read...\n");
-	#endif
-	write_str(HALT, prog->out);
+void process_token(char *tok, struct program *program){
+
+	// the first token should contain our instruction
+	if(!strcmp(tok, "HALT")){
+		process_instruction(program, HALT, 0, 0, "");
+	}
+	else if(!strcmp(tok, "NOT")){
+		process_instruction(program, NOT, 1, 1, "");
+	}
+	else if(!strcmp(tok, "SHL")){
+		process_instruction(program, SHL, 1, 1, "");
+	}
+	else if(!strcmp(tok, "SHR")){
+		process_instruction(program, SHR, 1, 1, "");
+	}
+	else if(!strcmp(tok, "OR")){
+		process_instruction(program, OR, 2, 1, "");
+	}
+	else if(!strcmp(tok, "AND")){
+		process_instruction(program, AND, 2, 1, "");
+	}
+	else if(!strcmp(tok, "ADD")){
+		process_instruction(program, ADD, 2, 1, "");
+	}
+	else if(!strcmp(tok, "SW")){
+		process_instruction(program, SW, 1, 0, "");
+	}
+	else if(!strcmp(tok, "LW")){
+		process_instruction(program, LW, 0, 1, "");
+	}
+	else if(!strcmp(tok, "BEZ")){
+		process_instruction(program, BEZ, 1, 0, "");
+	}
+	else if(!strcmp(tok, "ROT")){
+		process_instruction(program, ROT, 1, 0, "");
+	}
+	else if(!strcmp(tok, "ROT1")){
+		process_instruction(program, ROT1, 0, 0, "");
+	}
+	else if(!strcmp(tok, "JMP")){
+		process_instruction(program, JMP, 1, 0, "");
+	}
+	else if(!strcmp(tok, "NOP")){
+		process_instruction(program, NOP, 0, 0, "");
+	}
+	
+	// looks like a bad opcode
+	else{
+		#ifdef DEBUG
+			fprintf(stderr, "BAD CODE '%s'\n", tok);
+		#endif
+		print_unexpected_ident(tok, program);
+	}
 }
 
-/**
- * Not Instruction Processor.
- */
-void process_not(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "NOT instruction read...\n");
-	#endif
-	short src = read_src_reg(prog);
-	if(!src)
-		return;
-	short dst = read_dst_reg(prog);
-	if(!dst)
-		return;
-	write_instruc_str(NOT, src, 0, dst, "", prog);
-}
-
-void process_shl(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "Shift Left instruction read...\n");
-	#endif
-	short src = read_src_reg(prog);
-	if(!src)
-		return;
-	short dst = read_dst_reg(prog);
-	if(!dst)
-		return;
-	write_instruc_str(SHL, src, 0, dst, "", prog);
-}
-
-void process_shr(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "Shift Right instruction read...\n");
-	#endif
-	short src = read_src_reg(prog);
-	if(!src)
-		return;
-	short dst = read_dst_reg(prog);
-	if(!dst)
-		return;
-	write_instruc_str(SHR, src, 0, dst, "", prog);
-}
-
-void process_or(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "Or instruction read...\n");
-	#endif
-	short src, src2, dst;
-	src = read_src_reg(prog);
-	if(!src)
-		return;
-	src2 = read_src_reg(prog);
-	if(!src2)
-		return;
-	dst = read_dst_reg(prog);
-	if(!dst)
-		return;
-	write_instruc_str(SHR, src, src2, dst, "", prog);
-}
-
-void process_and(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "And instruction read...\n");
-	#endif
-	short src = read_src_reg(prog);
-	if(!src)
-		return;
-	short src2 = read_src_reg(prog);
-	if(!src2)
-		return;
-	short dst = read_dst_reg(prog);
-	if(!dst)
-		return;
-	write_instruc_str(SHR, src, src2, dst, "", prog);
-}
-
-void process_add(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "Add instruction read...\n");
-	#endif
-	short src = read_src_reg(prog);
-	if(!src)
-		return;
-	short src2 = read_src_reg(prog);
-	if(!src2)
-		return;
-	short dst = read_dst_reg(prog);
-	if(!dst)
-		return;
-	write_instruc_str(ADD, src, src2, dst, "", prog);
-}
-
-void process_sw(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "Store Word instruction read...\n");
-	#endif
-	short src = read_src_reg(prog);
-	if(!src)
-		return;
-	write_instruc_str(SW, src, 0, 0, "", prog);
-}
-
-void process_lw(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "Load Word instruction read...\n");
-	#endif
-	short dst = read_dst_reg(prog);
-	if(!dst)
-		return;
-	write_instruc_str(LW, 0, 0, dst, "", prog);
-}
-
-void process_bez(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "Branch When Equal to Zero instruction read...\n");
-	#endif
-	short src = read_src_reg(prog);
-	if(!src)
-		return;
-	write_instruc_str(BEZ, src, 0, 0, "", prog);
-}
-
-void process_rot(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "Move Cache Index instruction read...\n");
-	#endif
-	short src = read_src_reg(prog);
-	if(!src)
-		return;
-	write_instruc_str(ROT, src, 0, 0, "", prog);
-}
-
-void process_rot1(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "Move Cache Index Once instruction read...\n");
-	#endif
-	write_str(ROT1, prog->out);
-}
-
-void process_jmp(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "Jump instruction read...\n");
-	#endif
-	short src = read_src_reg(prog);
-	if(!src)
-		return;
-	write_instruc_str(JMP, src, 0, 0, "", prog);
-}
-
-void process_nop(struct program *prog){
-	#ifdef DEBUG
-		fprintf(stderr, "No Operation instruction read...\n");
-	#endif
-	write_str(NOP, prog->out);
+void process_instruction(struct program *prog, char *opcode, short src_count, 
+		short dest_count, char *misc){
+	short src = 0, src2 = 0, dest = 0;
+	if(src_count){
+		src = read_src_reg(prog);
+		if(!src)
+			return;
+	}
+	if(src_count == 2){
+		src2 = read_src_reg(prog);
+		if(!src2)
+			return;
+	}
+	if(dest_count){
+		dest = read_dst_reg(prog);
+		if(!dest)
+			return;
+	}
+	write_instruc_str(opcode, src, src2, dest, misc, prog);
 }
 
 /**

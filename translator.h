@@ -61,6 +61,9 @@ void write_instruc_str(char *str, short s1, short s2, short dest, char *misc,
 		struct program *prog);
 
 // Instruction Processing Fucntions
+void process_token(char *tok, struct program *prog);
+void process_instruction(struct program *prog, char *opcode, short src_count, 
+		short dest_count, char *misc);
 void process_halt(struct program *prog);
 void process_not(struct program *prog);
 void process_shl(struct program *prog);
