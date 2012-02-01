@@ -85,7 +85,7 @@ void process_input_program(struct program *program){
 		#ifdef DEBUG
 			fprintf(stderr, "*** Reading Line %d...\n", program->line_count);
 		#endif
-		short ret = fgetpos(program->in, &program->str_line);
+		fgetpos(program->in, &program->str_line);
 		tok = read_next_token(buf, program->in, MAX_LINE_LEN);
 		
 		#ifdef DEBUG
@@ -116,8 +116,19 @@ void process_input_program(struct program *program){
 	#endif
 }
 
+/**
+ *
+ */
 void process_token(char *tok, struct program *program){
 
+	// check if we have a label
+
+	
+
+	// check for comments
+	if(check_comment(tok, program))
+		return;
+	
 	// the first token should contain our instruction
 	if(!strcmp(tok, "HALT")){
 		process_instruction(program, HALT, 0, 0, "");
@@ -201,7 +212,8 @@ void check_garbage(struct program *prog){
 	#endif
 	char *tok;
 	if(tok = strtok(0, STR_TOK_SEP)){
-		print_unexpected_ident(tok, prog);
+		if(!check_comment(tok, prog))
+			print_unexpected_ident(tok, prog);
 	}
 }
 
@@ -312,7 +324,8 @@ char *read_reg(struct program *prog){
 /**
  * For more complex instructions that will come in pieces, this is useful as it 
  * will print the "binary" data in the order of the parameters.  Note that misc
- * is a "catch all" that can be used to print an arbitrary number of characters.
+ * is a "catch all" that can be used to print an arbitrary number of 
+ * characters.
  */
 void write_instruc_str(char *str, short s1, short s2, short dest, char *misc,
 		struct program *prog){
@@ -407,3 +420,22 @@ char *read_next_token(char *buf, FILE *input, int buf_size){
 	strtoupper(buf, strlen(buf));
 	return strtok(buf, STR_TOK_SEP);
 }
+
+short check_comment(char * tok, struct program * prog){
+	if(tok[0] == '#'){
+		#ifdef DEBUG
+			fprintf(stderr, "Ignoring comment on line %d\n", 
+					prog->line_count);
+		#endif
+		
+		// Just eat the rest of the string
+		blind_consume();
+		return 1;
+	}
+	return 0;
+}
+
+void blind_consume(){
+	while(strtok(0, STR_TOK_SEP));
+}
+

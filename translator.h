@@ -37,7 +37,7 @@
 #define NOP		"1111001"			// consumes a cycle
 
 // String Processing Constants
-#define	STR_TOK_SEP		" \n"
+#define	STR_TOK_SEP		" \t\n"
 
 // Instruction Processing Return Codes
 #define GARBAGE		1
@@ -64,20 +64,6 @@ void write_instruc_str(char *str, short s1, short s2, short dest, char *misc,
 void process_token(char *tok, struct program *prog);
 void process_instruction(struct program *prog, char *opcode, short src_count, 
 		short dest_count, char *misc);
-void process_halt(struct program *prog);
-void process_not(struct program *prog);
-void process_shl(struct program *prog);
-void process_shr(struct program *prog);
-void process_or(struct program *prog);
-void process_and(struct program *prog);
-void process_add(struct program *prog);
-void process_sw(struct program *prog);
-void process_lw(struct program *prog);
-void process_bez(struct program *prog);
-void process_rot(struct program *prog);
-void process_jmp(struct program *prog);
-void process_nop(struct program *prog);
-void process_rot1(struct program *prog);
 
 // Register Processing Instructions
 short read_src_reg(struct program *prog);
@@ -97,5 +83,7 @@ void trimwhitespace(char *string);
 void strtoupper(char *str, int len);
 short check_EOF(FILE *file);
 char *read_next_token(char *buf, FILE *input, int buf_size);
+short check_comment(char * tok, struct program *prog);
+void blind_consume();
 
 #endif
