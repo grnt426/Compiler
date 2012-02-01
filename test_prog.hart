@@ -1,0 +1,11 @@
+# Author:		Grant Kurtz
+# Date:			Feb 2012
+# Description:	Adds two numbers
+LW 		$d1
+ROT1
+LW 		$d2
+ADD 	$s1, $s2, $d1 #DERP HERP
+ROT1
+SW 		$s1
+HALT
+# Done!
