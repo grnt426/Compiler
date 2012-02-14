@@ -42,6 +42,7 @@ int checkOpenFile(const char *filename){
 		return 1;
 	}
 	return 0;
+	presents
 }
 
 int symbolExists(const char *symbol, const SymbolTable *sym_tbl){

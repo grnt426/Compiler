@@ -1,5 +1,5 @@
-#ifndef translator_h
-#define translator_h
+#ifndef translator_h_
+#define translator_h_
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -41,6 +41,12 @@
 
 // Instruction Processing Return Codes
 #define GARBAGE		1
+#define SYM_ERR		2
+
+// Special Symbols
+#define COMMENT_SYM		'*'
+#define LABEL_SYM		':'
+#define CONSTANT_SYM	'#'
 
 struct program{
 	FILE *out;
@@ -50,6 +56,8 @@ struct program{
 	unsigned short line_count;
 	short error_code;
 	char *err_str;
+	struct symbol_table *tbl;
+	struct symbol_table *const_tbl;
 };
 
 // Compilation Functions
@@ -65,6 +73,7 @@ void process_token(char *tok, struct program *prog);
 void process_instruction(struct program *prog, char *opcode, short src_count, 
 		short dest_count, char *misc);
 
+
 // Register Processing Instructions
 short read_src_reg(struct program *prog);
 short read_dst_reg(struct program *prog);
@@ -74,16 +83,8 @@ char *conv_reg_to_str(char *buf, short reg);
 // Error Handling Functions
 void check_garbage(struct program *prog);
 void print_compiler_error(struct program *prog);
-void print_unexpected_ident(char *ident, struct program *prog);
-void print_expected_ident(char *ident, char *expected, struct program * prog);
 
 // Miscellaneous File/String Manipulators
 FILE *open_write_file(const char *file);
-void trimwhitespace(char *string);
-void strtoupper(char *str, int len);
-short check_EOF(FILE *file);
-char *read_next_token(char *buf, FILE *input, int buf_size);
-short check_comment(char * tok, struct program *prog);
-void blind_consume();
 
 #endif

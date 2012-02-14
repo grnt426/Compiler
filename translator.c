@@ -6,6 +6,9 @@
  */
  
 #include "translator.h"
+#include "symbols.c"
+#include "idents.c"
+#include "strlib.c"
 
 int main(int argc, char **argv){
 	
@@ -46,11 +49,25 @@ int main(int argc, char **argv){
 	program->out = out_file;
 	program->input = argv[1];
 	program->in = input_file;
+
+	// create the symbol table
+	struct symbol_table *tbl = (struct symbol_table*) malloc(
+			sizeof(struct symbol_table));
+	memset(tbl, 0, sizeof(struct symbol_table));
+	program->tbl = tbl;
+
+	struct symbol_table *const_tbl = (struct symbol_table*) malloc(
+			sizeof(struct symbol_table));
+	memset(const_tbl, 0, sizeof(struct symbol_table));
+	program->const_tbl = const_tbl;
 	
 	// start processing file
 	process_input_program(program);
 	fclose(input_file);
 	fclose(out_file);
+	
+	print_symbols(program->tbl);
+	print_symbols(program->const_tbl);
 	
 	printf("\nDone.\n");
 }
@@ -122,15 +139,24 @@ void process_input_program(struct program *program){
 void process_token(char *tok, struct program *program){
 
 	// check if we have a label
-
-	
+	if(check_label_def(tok, program)){
+		process_label_def(tok, program);
+		return;
+	}
 
 	// check for comments
-	if(check_comment(tok, program))
+	else if(check_comment(tok, program)){
+		process_comment(tok, program);
 		return;
+	}
+
+	else if(check_const_def(tok, program)){
+		process_const_def(tok, program);
+		return;
+	}
 	
 	// the first token should contain our instruction
-	if(!strcmp(tok, "HALT")){
+	else if(!strcmp(tok, "HALT")){
 		process_instruction(program, HALT, 0, 0, "");
 	}
 	else if(!strcmp(tok, "NOT")){
@@ -238,37 +264,6 @@ void print_compiler_error(struct program *prog){
 	fgets(buf, MAX_LINE_LEN, prog->in);
 	trimwhitespace(buf);
 	fprintf(stderr, "\t'%s'\n", buf);
-}
-
-/**
- * Used for reporting that an unexpected token, where one may have not been 
- * anticipated, that wasnot supposed to exist.
- */
-void print_unexpected_ident(char *ident, struct program *prog){
-	print_compiler_error(prog);
-	fprintf(stderr, "\tUnexpected Identifier '%s'.\n", ident);
-	prog->error_code = GARBAGE;
-}
-
-/**
- * Used for reporting instances where a token was being processed, but an 
- * unexpected character was read where another was anticipated.
- */
-void print_expected_ident(char *ident, char *expected, struct program *prog){
-	print_compiler_error(prog);
-	fprintf(stderr, "\tExpected '%s' but found '%s'.\n", expected, ident);
-	prog->error_code = GARBAGE;
-}
-
-/**
- * A convenience function for finding the end of a given file.
- */
-short check_EOF(FILE *file){
-	int c = fgetc(file);
-	if(feof(file))
-		return 1;
-	ungetc(c, file);
-	return 0;
 }
 
 /**
@@ -382,60 +377,11 @@ char *conv_reg_to_str(char *buf, short reg){
 	return buf;
 }
 
-/**
- * Removes all trailing and leading whitespace, but will leave whitespace
- * inbetween valid characters.  Note, this function will move the resulting
- * cstring to the start of the char array so that the originally provided
- * pointer can be freed.
- * Source: 	http://stackoverflow.com/a/123724
- * 
- * @param	s	The cstring to be stripped.
- */
-void trimwhitespace(char *s){
-	char * p = s;
-	int l = strlen(p);
-	while(isspace(p[l - 1])) p[--l] = 0;
-	while(* p && isspace(* p)) ++p, --l;
-	memmove(s, p, l + 1);
-}
 
-/**
- * A convenience function for turning an entire string into uppercase.
- */
-void strtoupper(char *str, int len){
-	while(len){
-		str[len-1] = toupper(str[len-1]);
-		len--;
-	}
-}
 
-/**
- * Will process the first token of the given input buffer (or return the next
- * token of the previously provided buffer if buf is 0), trim whitespace, 
- * convert the entire buffer to uppercase, and then return the token.
- */
-char *read_next_token(char *buf, FILE *input, int buf_size){
-	fgets(buf, buf_size, input);
-	trimwhitespace(buf);
-	strtoupper(buf, strlen(buf));
-	return strtok(buf, STR_TOK_SEP);
-}
 
-short check_comment(char * tok, struct program * prog){
-	if(tok[0] == '#'){
-		#ifdef DEBUG
-			fprintf(stderr, "Ignoring comment on line %d\n", 
-					prog->line_count);
-		#endif
-		
-		// Just eat the rest of the string
-		blind_consume();
-		return 1;
-	}
-	return 0;
-}
 
-void blind_consume(){
-	while(strtok(0, STR_TOK_SEP));
-}
+
+
+
 

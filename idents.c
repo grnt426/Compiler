@@ -1,0 +1,124 @@
+/**
+ * File:		idents.c
+ * Author:		Grant Kurtz
+ *
+ * Description:	A library for hosting common identifier processing functions.
+ *
+ */
+
+#include "idents.h"
+
+/**
+ * Used for reporting that an unexpected token, where one may have not been 
+ * anticipated, that wasnot supposed to exist.
+ */
+void print_unexpected_ident(char *ident, struct program *prog){
+	print_compiler_error(prog);
+	fprintf(stderr, "\tUnexpected Identifier '%s'.\n", ident);
+	prog->error_code = GARBAGE;
+}
+
+/**
+ * Used for reporting instances where a token was being processed, but an 
+ * unexpected character was read where another was anticipated.
+ */
+void print_expected_ident(char *ident, char *expected, struct program *prog){
+	print_compiler_error(prog);
+	fprintf(stderr, "\tExpected '%s' but found '%s'.\n", expected, ident);
+	prog->error_code = GARBAGE;
+}
+
+
+short check_label_def(char *tok, struct program *prog){
+	if(tok[strlen(tok)-1] == LABEL_SYM)
+		return 1;
+	return 0;
+}
+
+void process_comment(){
+	#ifdef DEBUG
+		// fprintf(stderr, "Ignoring comment on line %d\n", 
+				// prog->line_count);
+	#endif
+		
+	// Just eat the rest of the string
+	blind_consume();
+}
+
+void process_label_def(char *tok, struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "Procesing label on line %d\n",
+				prog->line_count);
+	#endif
+
+	if(tok[0] == LABEL_SYM){
+		print_compiler_error(prog);
+		fprintf(stderr, "Label definition is empty!\n");
+		prog->error_code = SYM_ERR;
+	}
+	else{
+		char *iden = (char *) malloc(sizeof(tok));
+		strcpy(iden, tok);
+		iden[strlen(iden)-1] = '\0';
+		if(find_symbol(iden, prog->tbl)){
+			print_compiler_error(prog);
+			fprintf(stderr, "Doubly defined label!\n");
+		}
+		else{
+			add_symbol(iden, prog->line_count, prog->tbl);
+		}
+	}
+}
+
+short check_const_def(char *tok, struct program *prog){
+	if(tok[0] == CONSTANT_SYM)
+		return 1;
+	return 0;
+}
+
+void process_const_def(char *tok, struct program *prog){
+	if(!tok[1]){
+		print_compiler_error(prog);
+		fprintf(stderr, "Defined constant is empty!\n");
+	}
+	else{
+		char *iden = (char *) malloc(sizeof(tok)-1);
+		strcpy(iden, tok+1);
+		if(find_symbol(iden, prog->const_tbl)){
+			print_compiler_error(prog);
+			fprintf(stderr, "Doubly defined constant!\n");
+		}
+		else{
+			tok = strtok(0, STR_TOK_SEP);
+			if(!tok){
+				print_compiler_error(prog);
+				fprintf(stderr, "Newly defined constant has no value!\n");
+			}
+			else{
+				add_symbol(iden, atoi(tok), prog->const_tbl);
+			}
+		}
+	}
+}
+
+int process_const(char *tok, struct program *prog){
+	return find_symbol(tok, prog->const_tbl)->val;
+}
+
+short check_const(char *tok, struct program *prog){
+	if(find_symbol(tok, prog->const_tbl))
+		return 1;
+	return 0;
+}
+
+void blind_consume(){
+	while(strtok(0, STR_TOK_SEP));
+}
+
+short check_comment(char * tok, struct program * prog){
+	if(tok[0] == COMMENT_SYM)
+		return 1;
+	return 0;
+}
+
+
