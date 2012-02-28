@@ -1,12 +1,6 @@
 #ifndef translator_h_
 #define translator_h_
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <math.h>
-
 // debug print control
 #define DEBUG	// general purpose debug messages
 
@@ -36,29 +30,7 @@
 #define HALT	"1111000"			// stops all processing
 #define NOP		"1111001"			// consumes a cycle
 
-// String Processing Constants
-#define	STR_TOK_SEP		" \t\n"
-
-// Instruction Processing Return Codes
-#define GARBAGE		1
-#define SYM_ERR		2
-
-// Special Symbols
-#define COMMENT_SYM		'*'
-#define LABEL_SYM		':'
-#define CONSTANT_SYM	'#'
-
-struct program{
-	FILE *out;
-	FILE *in;
-	char *input;
-	fpos_t str_line;
-	unsigned short line_count;
-	short error_code;
-	char *err_str;
-	struct symbol_table *tbl;
-	struct symbol_table *const_tbl;
-};
+struct program;
 
 // Compilation Functions
 void process_input_program(struct program *prog);
@@ -80,9 +52,13 @@ short read_dst_reg(struct program *prog);
 char *read_reg(struct program *prog);
 char *conv_reg_to_str(char *buf, short reg);
 
+
+// Identifier Error Reporting
+void print_unexpected_ident(char *ident, struct program *prog);
+void print_expected_ident(char *ident, char *expected, struct program * prog);
+
 // Error Handling Functions
 void check_garbage(struct program *prog);
-void print_compiler_error(struct program *prog);
 
 // Miscellaneous File/String Manipulators
 FILE *open_write_file(const char *file);

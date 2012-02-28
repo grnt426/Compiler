@@ -1,4 +1,18 @@
+/**
+ * File:		compiler.c
+ * Author:		Grant Kurtz
+ *
+ * Description:	Processes a C-Style program and translates it into Hartz
+ * 				Assembly.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "symbols.c"
 #include "compiler.h"
+#include "generrors.c"
+#include "strlib.c"
 
 int main(){
 
@@ -13,12 +27,20 @@ int main(){
 	printf("Processing '%s' for compilation...\n", file);
 	
 	// build Symbol Table
-	SymbolTable *sym_tbl;
-	sym_tbl = (SymbolTable *) calloc(1, sizeof(SymbolTable));
-	sym_tbl -> sym_array = (Symbol **) calloc(10, sizeof(Symbol *));
-	
+	struct symbol_table *vars;
+	vars = (struct symbol_table *) malloc(sizeof(struct symbol_table));
+	memset(vars, 0, sizeof(struct symbol_table));
+
+	// Build program metadata
+	struct program *prog;
+	prog = (struct program *) malloc(sizeof(struct program));
+	memset(prog, 0, sizeof(struct program));
+	prog->input = file;
+	prog->in = fopen(file, "r");
+	prog->tbl = vars;
+
 	// begin parsing file
-	int ret_code = parseFile(file);
+	int ret_code = parseFile(prog);
 	return ret_code;
 }
 
@@ -42,70 +64,72 @@ int checkOpenFile(const char *filename){
 		return 1;
 	}
 	return 0;
-	presents
 }
 
-int symbolExists(const char *symbol, const SymbolTable *sym_tbl){
-	for(int i = 0; i < MAX_VARS; ++i){
-		if(strcmp(symbol, sym_tbl -> sym_array[i] -> varname) == 0)
-			return 1;
-	}
-	return 0;
-}
+int parseFile(struct program *prog){
 
-int tryAddSymbol(char *varname, const unsigned char value, 
-		SymbolTable *sym_tbl){
-		
 	// vars
-	Symbol * symbol;
-		
-	if(sym_tbl -> total_symbols == MAX_VARS)
-		return 0;
-	else{
-		for(int i = 0; i < MAX_VARS; i++){
-			symbol = sym_tbl -> sym_array[i];
-			if(symbol -> varname == 0){
-				symbol -> varname = varname;
-				symbol -> value = value;
-			}
-		}
-		sym_tbl -> total_symbols++;
-		return 1;
-	}
-}
-
-int parseFile(const char *filename){
-	FILE * fileh = fopen(filename, "r");
-	if(!fileh){
-		fprintf(stderr, "Unable to open file '%s'...what happened?", filename);
-		return -1;
-	}
-	
-	// vars
-	char identifier[64];
 	short chars_read;
-	unsigned int lines_read = 0;
+	char *tok;
+
+	do{
+		prog->line_count++;
+		#ifdef DEBUG
+			fprintf(stderr, "*** Reading Line %d...\n", prog->line_count);
+		#endif
+		fgetpos(prog->in, &prog->str_line);
+		tok = read_next_token(buf, prog->in, 64);
+
+		if(!tok){
+			continue;
+		}
+		else{
+			process_token(tok);
+		}
+	}while(!prog->error_code && !check_EOF(prog->in));
+
+
+}
+
+void process_token(char *tok, struct program *prog){
 	
-	// begin the look-ahead parser loop
-	while(chars_read = getNextSymbol(identifier)){
+	if(check_comment(tok)){
+		process_comment(tok);
+	}
+	else{
 		
-		// we were unable to find an identifier
-		if(chars_read == -1){
-			fprintf(stderr, "Unable to find a useful identifier, line %d!", 
-					lines_read);
-			return -1;
-		}
-		else if(chars_read == 0){
-			fprintf(stderr, "No characters read, empty file?");
-			return -1;
-		}
-		
-		// check to see what symbols we have
-		
+		// must be a variable
+		process_definition(tok);
 	}
 }
 
-int getNextSymbol(char *buffer){
+void process_definition(char *tok, struct program *prog){
+	
+	struct symbol *s;
+
+	// previously declared
+	if(s = find_symbol(tok, prog->tbl)){
+		// do stuff
+	}
+
+	// new term
+	else{
+		s = (struct symbol *) malloc(sizeof(struct symbol));
+		if(!s){
+			print_memory_error(prog);
+			return;
+		}
+		memset(s, 0, sizeof(struct symbol));
+		s->iden = (char *) malloc(strlen(tok));
+		strncpy(s->iden, tok, strlen(tok));
+	}
+	
+	struct term *t = (struct term *) malloc(sizeof(struct term));
+	if(!t){
+		print_memory_error(prog);
+		return;
+	}
+	strncpy(t->term, tok, strlen(tok));
 
 }
 
@@ -148,7 +172,7 @@ void ifStatement(struct Term *term, FILE *input, ProgramData *prog){
 	// add the closing parenthesis
 	addChildTerm(createSingleCharTerm(PAREN_S), term);
 	
-	// next, consume the 'BRACE_S' indentifier
+	// next, consume the 'BRACE_S' identifier
 	value = readNonEmptyChar(input, prog);
 	if(value == PAREN_S){
 		addChildTerm(createSingleCharTerm(BRACE_S), term);
@@ -160,7 +184,7 @@ void ifStatement(struct Term *term, FILE *input, ProgramData *prog){
 	// consume the following statement
 	
 	
-	// consume the final indentifier, 'BRACE_E'
+	// consume the final identifier, 'BRACE_E'
 	
 	
 }

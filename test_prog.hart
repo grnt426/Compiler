@@ -1,11 +1,17 @@
-# Author:		Grant Kurtz
-# Date:			Feb 2012
-# Description:	Adds two numbers
+* Author:		Grant Kurtz
+* Date:			Feb 2012
+* Description:	Adds two numbers
+
+#CONST 3
+#DERP 8
+
 LW 		$d1
 ROT1
 LW 		$d2
-ADD 	$s1, $s2, $d1 #DERP HERP
+ADD 	$s1, $s2, $d1 *DERP HERP
 ROT1
 SW 		$s1
+
+HALT_POINT:
 HALT
-# Done!
+* Done!

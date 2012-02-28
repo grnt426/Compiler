@@ -6,9 +6,11 @@
  * 				when it's written.
  */
 
+
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "symbols.h"
-#include "string.h"
-#include "stdio.h"
 
 void add_symbol(char *iden, int val, struct symbol_table *tbl){
 	if(!tbl)

@@ -6,8 +6,10 @@
  * Description:	Contains several useful string processing functions.
  */
 
+#include <stdio.h>
 #include "strlib.h"
-
+#include "string.h"
+#include "ctype.h"
 
 /**
  * Removes all trailing and leading whitespace, but will leave whitespace

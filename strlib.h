@@ -1,6 +1,9 @@
 #ifndef _STRLIB_H
 #define _STRLIB_H
 
+// String Processing Constants
+#define	STR_TOK_SEP		" \t\n"
+
 void trimwhitespace(char *string);
 void strtoupper(char *str, int len);
 short check_EOF(FILE *file);

@@ -5,10 +5,16 @@
  * Description:	Turns Hartz assembly code into a "binary executable".
  */
  
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <math.h>
 #include "translator.h"
-#include "symbols.c"
-#include "idents.c"
-#include "strlib.c"
+#include "symbols.h"
+#include "idents.h"
+#include "strlib.h"
+#include "generrors.h"
 
 int main(int argc, char **argv){
 	
@@ -45,7 +51,6 @@ int main(int argc, char **argv){
 	// setup our program struct to store some data
 	struct program *program = (struct program*) malloc(sizeof(struct program));
 	memset(program, 0, sizeof(struct program));
-	program->line_count = 0;
 	program->out = out_file;
 	program->input = argv[1];
 	program->in = input_file;
@@ -250,20 +255,25 @@ void write_str(char *str, FILE *out){
 	fprintf(out, "%s\n", str);
 }
 
+
 /**
- * Sets up a standard compiler error reporting message to indicate the file of
- * failure and the line the failure occured on.
+ * Used for reporting that an unexpected token, where one may have not been 
+ * anticipated, that wasnot supposed to exist.
  */
-void print_compiler_error(struct program *prog){
-	char buf[MAX_LINE_LEN+1];
-	buf[MAX_LINE_LEN] = 0;
-	fprintf(stderr, "%s: %d:\n", prog->input, prog->line_count);
-	
-	// Go back to start of line to show the user where the error occured.
-	fsetpos(prog->in, &prog->str_line);
-	fgets(buf, MAX_LINE_LEN, prog->in);
-	trimwhitespace(buf);
-	fprintf(stderr, "\t'%s'\n", buf);
+void print_unexpected_ident(char *ident, struct program *prog){
+	print_compiler_error(prog);
+	fprintf(stderr, "\tUnexpected Identifier '%s'.\n", ident);
+	prog->error_code = GARBAGE;
+}
+
+/**
+ * Used for reporting instances where a token was being processed, but an 
+ * unexpected character was read where another was anticipated.
+ */
+void print_expected_ident(char *ident, char *expected, struct program *prog){
+	print_compiler_error(prog);
+	fprintf(stderr, "\tExpected '%s' but found '%s'.\n", expected, ident);
+	prog->error_code = GARBAGE;
 }
 
 /**

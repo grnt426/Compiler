@@ -1,9 +1,6 @@
 #ifndef compiler_h
 #define compiler_h
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 // Machine Capabilities
 #define MAX_VARS 	6
@@ -24,16 +21,6 @@
 #define TAB			'\t'
 #define SPACE		' '
 
-typedef struct{
-	char *varname;
-	unsigned char value;
-} Symbol;
-
-typedef struct{
-	Symbol **sym_array;
-	unsigned int total_symbols;
-} SymbolTable;
-
 struct Term{
 	char* term;
 	struct Term **child_terms;
@@ -43,6 +30,8 @@ typedef struct{
 	unsigned short line_count;
 	unsigned short has_error;
 	char *err_msg;
+	FILE *input;
+	FILE *output;
 } ProgramData;
 
 
@@ -55,17 +44,20 @@ int consumeUntil(FILE * input, char * buf, const unsigned int buf_size,
 		const char term_char, ProgramData *prog);
 
 // Symbol Table Manipulation Functions
-int 	symbolExists(const char*, const SymbolTable *);
+/*int 	symbolExists(const char*, const SymbolTable *);
 void	putSymbol(const unsigned char, const char*, const unsigned char,
 			SymbolTable *);
 int		tryAddSymbol(char*, const unsigned char, SymbolTable *);
-int		parseFile(const char * file);
+*/
+int		parseFile(struct program *prog);
 int		getNextSymbol(char *);
 
 
 // Productions
 void 	ifStatement(struct Term *, FILE *, ProgramData *);
 
+// Pre-Production Identifiers
+void	process_definition(char *tok, struct program *prog);
 
 // Error Handling
 void 	reportCompilerError(char *, ProgramData *);
