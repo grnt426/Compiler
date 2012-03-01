@@ -40,7 +40,7 @@ void 	printEqualsSeparator();
 int 	checkOpenFile(const char*);
 void 	getInputFile();
 char 	readNonEmptyChar(FILE *, ProgramData *);
-int consumeUntil(FILE * input, char * buf, const unsigned int buf_size, 
+int 	consumeUntil(FILE * input, char * buf, const unsigned int buf_size, 
 		const char term_char, ProgramData *prog);
 
 // Symbol Table Manipulation Functions

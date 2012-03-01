@@ -9,10 +9,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "symbols.c"
+#include "symbols.h"
 #include "compiler.h"
-#include "generrors.c"
-#include "strlib.c"
+#include "generrors.h"
+#include "strlib.h"
+#include "idents.h"
 
 int main(){
 
@@ -59,7 +60,7 @@ void getInputFile(char *file){
 
 int checkOpenFile(const char *filename){
 	FILE *file;
-	if(file = fopen(filename, "r")){
+	if( (file = fopen(filename, "r")) ){
 		fclose(file);
 		return 1;
 	}
@@ -77,29 +78,29 @@ int parseFile(struct program *prog){
 		#ifdef DEBUG
 			fprintf(stderr, "*** Reading Line %d...\n", prog->line_count);
 		#endif
-		fgetpos(prog->in, &prog->str_line);
-		tok = read_next_token(buf, prog->in, 64);
-
+		// fgetpos(prog->in, &prog->str_line);
+		// tok = read_next_token(buf, prog->in, 64);
+		break;
 		if(!tok){
 			continue;
 		}
 		else{
-			process_token(tok);
+			// process_token(tok);
 		}
 	}while(!prog->error_code && !check_EOF(prog->in));
 
-
+	return 0;
 }
 
 void process_token(char *tok, struct program *prog){
 	
-	if(check_comment(tok)){
+	if(check_comment(tok, prog)){
 		process_comment(tok);
 	}
 	else{
 		
 		// must be a variable
-		process_definition(tok);
+		process_definition(tok, prog);
 	}
 }
 
@@ -108,7 +109,7 @@ void process_definition(char *tok, struct program *prog){
 	struct symbol *s;
 
 	// previously declared
-	if(s = find_symbol(tok, prog->tbl)){
+	if( (s = find_symbol(tok, prog->tbl)) ){
 		// do stuff
 	}
 
@@ -124,7 +125,7 @@ void process_definition(char *tok, struct program *prog){
 		strncpy(s->iden, tok, strlen(tok));
 	}
 	
-	struct term *t = (struct term *) malloc(sizeof(struct term));
+	struct Term *t = (struct Term *) malloc(sizeof(struct Term));
 	if(!t){
 		print_memory_error(prog);
 		return;

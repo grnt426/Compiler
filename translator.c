@@ -242,7 +242,7 @@ void check_garbage(struct program *prog){
 		fprintf(stderr, "Checking for garbage at EOL...\n");
 	#endif
 	char *tok;
-	if(tok = strtok(0, STR_TOK_SEP)){
+	if((tok = strtok(0, STR_TOK_SEP))){
 		if(!check_comment(tok, prog))
 			print_unexpected_ident(tok, prog);
 	}
