@@ -255,27 +255,6 @@ void write_str(char *str, FILE *out){
 	fprintf(out, "%s\n", str);
 }
 
-
-/**
- * Used for reporting that an unexpected token, where one may have not been 
- * anticipated, that wasnot supposed to exist.
- */
-void print_unexpected_ident(char *ident, struct program *prog){
-	print_compiler_error(prog);
-	fprintf(stderr, "\tUnexpected Identifier '%s'.\n", ident);
-	prog->error_code = GARBAGE;
-}
-
-/**
- * Used for reporting instances where a token was being processed, but an 
- * unexpected character was read where another was anticipated.
- */
-void print_expected_ident(char *ident, char *expected, struct program *prog){
-	print_compiler_error(prog);
-	fprintf(stderr, "\tExpected '%s' but found '%s'.\n", expected, ident);
-	prog->error_code = GARBAGE;
-}
-
 /**
  * Will attempt to find a source register of the given format:
  *		$S<x>

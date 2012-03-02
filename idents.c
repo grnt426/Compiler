@@ -107,7 +107,6 @@ short check_comment(char * tok, struct program * prog){
 	return 0;
 }
 
-
 /**
  * Sets up a standard compiler error reporting message to indicate the file of
  * failure and the line the failure occured on.
@@ -124,4 +123,23 @@ void print_compiler_error(struct program *prog){
 	fprintf(stderr, "\t'%s'\n", buf);
 }
 
+/**
+ * Used for reporting that an unexpected token, where one may have not been 
+ * anticipated, that wasnot supposed to exist.
+ */
+void print_unexpected_ident(char *ident, struct program *prog){
+	print_compiler_error(prog);
+	fprintf(stderr, "\tUnexpected Identifier '%s'.\n", ident);
+	prog->error_code = GARBAGE;
+}
+
+/**
+ * Used for reporting instances where a token was being processed, but an 
+ * unexpected character was read where another was anticipated.
+ */
+void print_expected_ident(char *ident, char *expected, struct program *prog){
+	print_compiler_error(prog);
+	fprintf(stderr, "\tExpected '%s' but found '%s'.\n", expected, ident);
+	prog->error_code = GARBAGE;
+}
 

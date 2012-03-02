@@ -28,6 +28,10 @@ void process_comment();
 // Error Reporting
 void print_compiler_error(struct program *prog);
 
+// Identifier Error Reporting
+void print_unexpected_ident(char *ident, struct program *prog);
+void print_expected_ident(char *ident, char *expected, struct program * prog);
+
 // Miscellaneous
 void blind_consume();
 

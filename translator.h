@@ -52,11 +52,6 @@ short read_dst_reg(struct program *prog);
 char *read_reg(struct program *prog);
 char *conv_reg_to_str(char *buf, short reg);
 
-
-// Identifier Error Reporting
-void print_unexpected_ident(char *ident, struct program *prog);
-void print_expected_ident(char *ident, char *expected, struct program * prog);
-
 // Error Handling Functions
 void check_garbage(struct program *prog);
 
