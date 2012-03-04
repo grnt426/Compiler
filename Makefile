@@ -1,8 +1,8 @@
 # Used for compiling the project.  If no make target is specified, by default
 # only the object files necessary to create the Hartz translator are compiled.
 CC = gcc
-CFLAGS = -std=c99 -Wall
-COMMON_FILES = symbols.c idents.c strlib.c generrors.c
+CFLAGS = -std=c99 -Wall -lm
+COMMON_FILES = symbols.c idents.c strlib.c generrors.c terms.c
 HARTZ_FILES = translator.c
 CCODE_FILES = compiler.c
 HARTZ_EXEC = translator

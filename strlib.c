@@ -7,6 +7,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 #include "strlib.h"
 #include "string.h"
 #include "ctype.h"
@@ -59,5 +61,43 @@ short check_EOF(FILE *file){
 		return 1;
 	ungetc(c, file);
 	return 0;
+}
+
+/**
+ * Converts a digit into its character equivalent.
+ *
+ * @param	d		The digit to convert
+ * @return			The character represent of the digit
+ */
+char dtoc(const int d){
+	static const char nums[] = "0123456789";
+	return nums[d];
+}
+
+/**
+ * Converts a number into a string equivalent.
+ *
+ * @param	num		The number to convert
+ * @return			The string representation of the number.
+ */
+char *numtos(int num){
+	int len = numd(num);
+	char *number = (char *) malloc(len);
+	while(len){
+		number[len-1] = dtoc(num % 10);
+		num /= 10;
+		len--;
+	}
+	return number;
+}
+
+/**
+ * Returns the number of digits in the given number.
+ *
+ * @param	num		The number to parse.
+ * @return			The number of individual digits in the number.
+ */
+int numd(int num){
+	return (num == 0) ? 1 : (int) log10((double)num)+1;
 }
 
