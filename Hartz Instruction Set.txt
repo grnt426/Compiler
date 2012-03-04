@@ -67,10 +67,11 @@ Instruction Set:
 			- applies multiplier, then loads and performs rotate
 		- lrot (bit 6 ignored, bit 7 = 0)
 			- apply no multiplier
-	- JMP 	<1010>
-		- Rotates Text Ring by amount in next value on text ring
-		- jmp !multiplier
-	- NA 	<1011>
+	- LJMP 	<1010>
+		- Specifies that the next instruction is to be made a longer jump
+		- ljmp !multiplier
+	- JMP	<1011>
+		- The literal value to rotate by 
 	- NA 	<1100>
 	- NA 	<1101>
 	- HLT 	<11110>
