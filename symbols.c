@@ -19,7 +19,6 @@ void add_symbol(char *iden, int val, struct symbol_table *tbl){
 	struct symbol *sym = (struct symbol *) malloc(sizeof(struct symbol));
 	sym->iden = iden;
 	sym->val = val;
-	sym->used = 0;
 	sym->next = 0;
 
 	if(tbl->r){
@@ -58,8 +57,7 @@ void print_symbol(struct symbol *sym, int c){
 	else{
 		printf(	"Next:\t%p\n"
 				"Iden:\t%s\n"
-				"Val:\t%d\n"
-				"Used:\t%d\n", sym->next, sym->iden, sym->val, sym->used);
+				"Val:\t%d\n", sym->next, sym->iden, sym->val);
 	}
 }
 

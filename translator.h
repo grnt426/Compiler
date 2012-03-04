@@ -28,7 +28,7 @@
 #define	ROT		"10011"				// increase cache index by $source
 #define	JMP		"1010"				// move memory pointer by $source
 #define HALT	"1111000"			// stops all processing
-#define NOP		"1111001"			// consumes a cycle
+#define NOP		"1111100"			// consumes a cycle
 
 struct program;
 

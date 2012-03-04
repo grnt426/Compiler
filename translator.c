@@ -15,6 +15,7 @@
 #include "idents.h"
 #include "strlib.h"
 #include "generrors.h"
+#include "terms.h"
 
 int main(int argc, char **argv){
 	
@@ -43,7 +44,7 @@ int main(int argc, char **argv){
 			"\t%d Bytes of Memory\n"
 			"\t%d Registers\n"
 			"\t%d Bytes of Cache\n\n"
-			"Compiler Contraints\n"
+			"Compiler Constraints\n"
 			"\tMax Line Length of %d Bytes\n"
 			"\tMax One Instruction Per Line\n",
 			MAX_MEMORY, MAX_REGS, MAX_CACHE, MAX_LINE_LEN);
@@ -61,6 +62,7 @@ int main(int argc, char **argv){
 	memset(tbl, 0, sizeof(struct symbol_table));
 	program->tbl = tbl;
 
+	// Create the table for constants
 	struct symbol_table *const_tbl = (struct symbol_table*) malloc(
 			sizeof(struct symbol_table));
 	memset(const_tbl, 0, sizeof(struct symbol_table));
@@ -155,6 +157,7 @@ void process_token(char *tok, struct program *program){
 		return;
 	}
 
+	// process constant definitions
 	else if(check_const_def(tok, program)){
 		process_const_def(tok, program);
 		return;
@@ -215,6 +218,11 @@ void process_token(char *tok, struct program *program){
 
 void process_instruction(struct program *prog, char *opcode, short src_count, 
 		short dest_count, char *misc){
+
+	struct Term *t = (struct Term *) malloc(sizeof(struct Term));
+	
+
+	// registers
 	short src = 0, src2 = 0, dest = 0;
 	if(src_count){
 		src = read_src_reg(prog);
@@ -231,6 +239,7 @@ void process_instruction(struct program *prog, char *opcode, short src_count,
 		if(!dest)
 			return;
 	}
+
 	write_instruc_str(opcode, src, src2, dest, misc, prog);
 }
 
@@ -366,11 +375,9 @@ char *conv_reg_to_str(char *buf, short reg){
 	return buf;
 }
 
+void translate_terms(struct Term * term, struct program *prog){
 
-
-
-
-
-
+	
+}
 
 

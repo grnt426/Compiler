@@ -14,6 +14,7 @@
 #include "generrors.h"
 #include "strlib.h"
 #include "idents.h"
+#include "terms.h"
 
 int main(){
 
@@ -190,14 +191,6 @@ void ifStatement(struct Term *term, FILE *input, ProgramData *prog){
 	
 }
 
-void addChildTerm(struct Term *child, struct Term *parent){
-	int i = 0;
-	while(parent->child_terms[i] != NULL){
-		++i;
-	}
-	parent->child_terms[i] = child; // the compiler throws a warning?
-}
-
 void reportCompilerError(char * err_msg, ProgramData * prog){
 	
 }
@@ -236,14 +229,3 @@ int consumeUntil(FILE *input, char *buf, const unsigned int buf_size,
 	return -1;
 }
 
-struct Term* createTerm(char* term, unsigned int term_len){
-	struct Term * new_term = (struct Term *) calloc(1, sizeof(struct Term));
-	strncpy(new_term->term, term, term_len);
-	return new_term;
-}
-
-struct Term* createSingleCharTerm(const char term){
-	struct Term * new_term = (struct Term *) calloc(1, sizeof(struct Term));
-	new_term->term[0] = term;
-	return new_term;
-}

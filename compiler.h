@@ -21,11 +21,6 @@
 #define TAB			'\t'
 #define SPACE		' '
 
-struct Term{
-	char* term;
-	struct Term **child_terms;
-};
-
 typedef struct{
 	unsigned short line_count;
 	unsigned short has_error;
@@ -62,10 +57,5 @@ void	process_definition(char *tok, struct program *prog);
 // Error Handling
 void 	reportCompilerError(char *, ProgramData *);
 
-
-// Term Manipulation Functions
-void 	addChildTerm(struct Term *, struct Term *);
-struct Term* 	createTerm(char* term, unsigned int term_len);
-struct Term* 	createSingleCharTerm(const char term);
 
 #endif

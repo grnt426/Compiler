@@ -1,7 +1,7 @@
-#ifndef symbols_h_
-#define symbols_h_
+#ifndef SYMBOLS_H_
+#define SYMBOLS_H
 
-
+struct Term;
 
 struct symbol_table{
 	struct symbol *r;
@@ -12,8 +12,8 @@ struct symbol_table{
 typedef struct symbol{
 	struct symbol *next;
 	char *iden;
+	struct Term * term;
 	int val;
-	short used;
 }symbol;
 
 struct program{
@@ -26,6 +26,7 @@ struct program{
 	char *err_str;
 	struct symbol_table *tbl;
 	struct symbol_table *const_tbl;
+	struct Term * terms;
 };
 
 void add_symbol(char *iden, int val, struct symbol_table *tbl);
