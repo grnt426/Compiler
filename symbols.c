@@ -78,3 +78,9 @@ void print_symbols(struct symbol_table *tbl){
 	}
 }
 
+void print_symbol_not_found(const char *bad_sym, struct program *prog){
+	fprintf(stderr, "\tUnknown Symbol '%s'.\n", bad_sym);
+	prog->error_code = -1; // TODO: create actual error_code 
+
+}
+

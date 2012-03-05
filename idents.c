@@ -97,6 +97,16 @@ short check_const(char *tok, struct program *prog){
 	return 0;
 }
 
+short check_explicit_literal(char *tok, struct program *prog){
+	if(tok[0] == LITERAL_SYM)
+		return 1;
+	return 0;
+}
+
+void process_literal(char *tok, short max_bits, short offset){
+	
+}
+
 void blind_consume(){
 	while(strtok(0, STR_TOK_SEP));
 }
