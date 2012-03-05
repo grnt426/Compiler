@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include "symbols.h"
 
-void add_symbol(char *iden, int val, struct symbol_table *tbl){
+void add_symbol(char *iden, int val, struct symbol_table *tbl, int pos){
 	if(!tbl)
 		return;
 	
@@ -20,6 +20,9 @@ void add_symbol(char *iden, int val, struct symbol_table *tbl){
 	sym->iden = iden;
 	sym->val = val;
 	sym->next = 0;
+	sym->pos = pos;
+	sym->used = 0;
+
 
 	if(tbl->r){
 		tbl->e->next = sym;
@@ -57,7 +60,8 @@ void print_symbol(struct symbol *sym, int c){
 	else{
 		printf(	"Next:\t%p\n"
 				"Iden:\t%s\n"
-				"Val:\t%d\n", sym->next, sym->iden, sym->val);
+				"Val:\t%d\n"
+				"Used:\t%d\n", sym->next, sym->iden, sym->val, sym->used);
 	}
 }
 
@@ -82,5 +86,13 @@ void print_symbol_not_found(const char *bad_sym, struct program *prog){
 	fprintf(stderr, "\tUnknown Symbol '%s'.\n", bad_sym);
 	prog->error_code = -1; // TODO: create actual error_code 
 
+}
+
+
+void print_symbol_not_used(const struct symbol *sym, const char *sym_type, 
+		const struct program *prog){
+	
+	fprintf(stderr, "%s: %d:\n", prog->input, sym->pos);
+	fprintf(stderr, "\tWarning: %s '%s' is not used.\n", sym_type, sym->iden);
 }
 

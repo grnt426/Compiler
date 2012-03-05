@@ -50,7 +50,7 @@ void process_label_def(char *tok, struct program *prog){
 			fprintf(stderr, "Doubly defined label!\n");
 		}
 		else{
-			add_symbol(iden, prog->line_count, prog->tbl);
+			add_symbol(iden, prog->line_count, prog->tbl, prog->line_count);
 		}
 	}
 }
@@ -81,7 +81,7 @@ void process_const_def(char *tok, struct program *prog){
 			}
 			else{
 				// TODO: CHECK VALUE OF ATOI() call
-				add_symbol(iden, atoi(tok), prog->const_tbl);
+				add_symbol(iden, atoi(tok), prog->const_tbl, prog->line_count);
 			}
 		}
 	}

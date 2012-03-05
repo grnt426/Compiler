@@ -16,6 +16,8 @@ typedef struct symbol{
 	char *iden;
 	struct Term * term;
 	int val;
+	int pos;
+	short used;
 }symbol;
 
 struct program{
@@ -34,7 +36,7 @@ struct program{
 };
 
 // Symbol manipulation
-void add_symbol(char *iden, int val, struct symbol_table *tbl);
+void add_symbol(char *iden, int val, struct symbol_table *tbl, int pos);
 
 // Symbol searching
 struct symbol *find_symbol(char *iden, struct symbol_table *tbl);
@@ -45,5 +47,7 @@ void print_symbols(struct symbol_table *tbl);
 
 // Error handling
 void print_symbol_not_found(const char *bad_sym, struct program *prog);
+void print_symbol_not_used(const struct symbol *sym, const char *sym_type, 
+		const struct program *prog);
 
 #endif
