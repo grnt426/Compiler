@@ -40,6 +40,7 @@ void add_child_term(struct Term *child, struct Term *parent,
 
 struct Term* create_term(char* term, unsigned int term_len, int children){
 	struct Term * new_term = (struct Term *) malloc(sizeof(struct Term));
+	new_term->child_count = children;
 	if(!new_term){
 		#ifdef DEBUG
 			fprintf(stderr, "NEW TERM IS NUL.\n");
@@ -61,6 +62,7 @@ struct Term* create_term(char* term, unsigned int term_len, int children){
 
 struct Term* create_single_char_term(const char term, int children){
 	struct Term * new_term = (struct Term *) malloc(sizeof(struct Term));
+	new_term->child_count = children;
 	new_term->term = (char *) malloc(2);
 	new_term->term[1] = '\0';
 	new_term->term[0] = term;

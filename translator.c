@@ -139,6 +139,7 @@ void process_input_program(struct program *program){
 	int diff;
 	while(t){
 		
+		// example code for dealing with JMP instructions
 		if(strcmp(t->term, JMP) == 0){
 			
 			// extract the multiplier
@@ -179,6 +180,23 @@ void process_input_program(struct program *program){
 	}
 
 	// write terms to out file
+	t = program->terms;
+	int c = 0;
+	int total_bits = 0;
+	static const char *filler = "0000000";
+	while(t){
+		total_bits = fprintf(program->out, "%s", t->term);
+		while(c < t->child_count){
+			total_bits += fprintf(program->out, "%s", t->child_terms[c]->term);
+			c++;
+		}
+		if(total_bits != WORD_SIZE){
+			fprintf(program->out, "%s", filler + total_bits);
+		}
+		fprintf(program->out, "\n");
+		c = 0;
+		t = t->next_term;
+	}
 
 	
 	#ifdef DEBUG
@@ -299,21 +317,21 @@ void process_instruction(struct program *prog, char *opcode, short src_count,
 		src = read_src_reg(prog);
 		if(!src)
 			return;
-		c = create_single_char_term(dtoc(src), 0); 
+		c = create_single_char_term(dtoc(src-1), 0); 
 		add_child_term(c, t, prog);
 	}
 	if(src_count == 2){
 		src2 = read_src_reg(prog);
 		if(!src2)
 			return;
-		c = create_single_char_term(dtoc(src2), 0);
+		c = create_single_char_term(dtoc(src2-1), 0);
 		add_child_term(c, t, prog);
 	}
 	if(dest_count){
 		dest = read_dst_reg(prog);
 		if(!dest)
 			return;
-		c = create_single_char_term(dtoc(dest), 0);
+		c = create_single_char_term(dtoc(dest-1), 0);
 		add_child_term(c, t, prog);
 	}
 }
@@ -448,7 +466,7 @@ char *conv_reg_to_str(char *buf, short reg){
 			buf[char_count-1] = '1';
 		else
 			buf[char_count-1] = '0';
-		reg /= 2;
+		//reg /= 2;
 		char_count--;
 	}while(char_count);
 	return buf;

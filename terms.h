@@ -11,6 +11,7 @@
 struct Term{
 	char* term;
 	int pos;
+	int child_count;
 	struct Term **child_terms;
 	struct Term *next_term;
 };
