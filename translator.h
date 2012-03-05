@@ -2,7 +2,7 @@
 #define translator_h_
 
 // debug print control
-#define DEBUG	// general purpose debug messages
+#define DEBUG_	// general purpose debug messages
 
 // Machine Constraints
 #define MAX_REGS		2
@@ -25,10 +25,16 @@
 #define	LW		"0111"				// load word from cache into $dest
 #define	BEZ		"1000"				// branch if $source equal to zero
 #define ROT1	"1001000"			// increase cache index by one
-#define	ROT		"10011"				// increase cache index by $source
-#define	JMP		"1010"				// move memory pointer by $source
+#define	ROT		"10010"				// increase cache index by $source
+#define LROT	"10011"
+#define	LJMP	"1010"				// apply scalar to next jump
+#define	JMP		"1011"				// next value is a pointer
 #define HALT	"1111000"			// stops all processing
-#define NOP		"1111001"			// consumes a cycle
+#define NOP		"1111100"			// consumes a cycle
+
+// Flags
+#define WARNINGS	"-w"
+#define PRINT_SYMS	"-s"
 
 struct program;
 

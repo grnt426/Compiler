@@ -5,6 +5,7 @@
 #define COMMENT_SYM		'*'
 #define LABEL_SYM		':'
 #define CONSTANT_SYM	'#'
+#define LITERAL_SYM		'!'
 
 // Soft Contraints
 #define MAX_LINE_LEN	32
@@ -20,6 +21,9 @@ short check_const_def(char *tok, struct program *prog);
 void process_const_def(char *tok, struct program *prog);
 int process_const(char *tok, struct program *prog);
 short check_const(char *tok, struct program *prog);
+
+// literals
+short check_explicit_literal(char *tok, struct program *prog);
 
 // Comment Processing Functions
 short check_comment(char * tok, struct program *prog);

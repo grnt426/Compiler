@@ -55,23 +55,30 @@ Instruction Set:
 		- beq $source
 			- True: Right
 			- False: Read current instruction
-	- ROT 	<1001>
+	- ROT 	<10010(0/1)>
 		- Rotates Data Ring
-		- rot $countReg (bit 5 is register, bit six = 1)
+		- rot $countReg (bit 7 is register, bit 6 = 1)
 			- rotates by the specified value in the register
 		- rot (bit 6 = 0)
 			- implicitly rotates once
-	- JMP 	<1010>
-		- Rotates Text Ring
-		- jmp $countReg
-	- NA 	<1011>
+	- LROT	<10011(0/1)>
+		- Rotates Data Ring by amount in next value on text ring
+		- lrot $multiplier_reg (bit 7 is register, bit 6 = 1)
+			- applies multiplier, then loads and performs rotate
+		- lrot (bit 7 ignored, bit 6 = 0)
+			- apply no multiplier
+	- LJMP 	<1010>
+		- Specifies that the next instruction is to be made a longer jump
+		- ljmp !multiplier
+	- JMP	<1011>
+		- The literal value to rotate by 
 	- NA 	<1100>
 	- NA 	<1101>
-	- NOP 	<1110>
+	- HLT 	<11110>
+		- Halt execution
+	- NOP 	<11111>
 		- No Operation
 		- does nothing
-	- HLT 	<1111>
-		- Halt execution
 
 Program Execution:
 	- Load instruction from text ring

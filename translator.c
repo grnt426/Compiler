@@ -15,13 +15,28 @@
 #include "idents.h"
 #include "strlib.h"
 #include "generrors.h"
+#include "terms.h"
+
+// Argument data
+int warnings = 0;
+int print_tables = 0;
 
 int main(int argc, char **argv){
 	
 	// perform sanity check on arguments
-	if(argc < 3 || argc > 4){
-		fprintf(stderr, "Usage: translator <input_file> [target_exe]\n");
+	if(argc < 3 || argc > 5){
+		fprintf(stderr, "Usage: translator <input_file> <target_exe>"
+				"[warnings] [symbols]\n");
 		return 1;
+	}
+
+	int c = 0;
+	argc -= 3;
+	while(c < argc){
+		if(strcmp(argv[c], WARNINGS) == 0)
+			warnings = 1;
+		else if(strcmp(argv[c], PRINT_SYMS) == 0)
+			print_tables = 1;
 	}
 	
 	// try to open/create the files the user wants us to use
@@ -43,7 +58,7 @@ int main(int argc, char **argv){
 			"\t%d Bytes of Memory\n"
 			"\t%d Registers\n"
 			"\t%d Bytes of Cache\n\n"
-			"Compiler Contraints\n"
+			"Compiler Constraints\n"
 			"\tMax Line Length of %d Bytes\n"
 			"\tMax One Instruction Per Line\n",
 			MAX_MEMORY, MAX_REGS, MAX_CACHE, MAX_LINE_LEN);
@@ -61,6 +76,7 @@ int main(int argc, char **argv){
 	memset(tbl, 0, sizeof(struct symbol_table));
 	program->tbl = tbl;
 
+	// Create the table for constants
 	struct symbol_table *const_tbl = (struct symbol_table*) malloc(
 			sizeof(struct symbol_table));
 	memset(const_tbl, 0, sizeof(struct symbol_table));
@@ -70,7 +86,8 @@ int main(int argc, char **argv){
 	process_input_program(program);
 	fclose(input_file);
 	fclose(out_file);
-	
+
+	printf("\n");
 	print_symbols(program->tbl);
 	print_symbols(program->const_tbl);
 	
@@ -102,6 +119,7 @@ void process_input_program(struct program *program){
 	char buf[MAX_LINE_LEN+1];
 	buf[MAX_LINE_LEN] = 0;
 	
+	// parse input file
 	do{
 		program->line_count++;
 		#ifdef DEBUG
@@ -126,6 +144,95 @@ void process_input_program(struct program *program){
 		if(!program->error_code)
 			check_garbage(program);
 	}while(!check_EOF(program->in) && !program->error_code);
+
+	if(program->error_code)
+		return;
+
+	// resolve constants/labels
+	struct Term *t = program->terms;
+	struct symbol *s;
+	int diff;
+	while(t){
+		
+		// example code for dealing with JMP instructions
+		if(strcmp(t->term, JMP) == 0){
+			
+			// extract the multiplier
+
+			// the next term specifies an r-pointer
+			t = t->next_term;
+			if(check_explicit_literal(t->term, program)){
+
+				// convert to binary and print
+			}
+			else{
+
+				if( (s = find_symbol(t->term, program->tbl)) ){
+					
+					s->used = 1;
+
+					// we have a label to resolve
+					diff = s->term->pos - t->pos;
+					if(diff < 0){
+						diff = MAX_MEMORY - diff;
+					}
+
+					// convert to binary, print
+					#ifdef DEBUG
+						printf("RESOLVED LABEL, OFFSET: %d\n", diff);
+					#endif
+					
+				}
+				else if( (s = find_symbol(t->term, program->const_tbl)) ){
+					
+					s->used = 1;
+
+					// looks like a hardcoded jump value was used
+				}
+				else{
+					// TODO: use the standard print_compiler_error message
+					print_symbol_not_found(t->term, program);
+				}
+			}
+		}
+		t = t->next_term;
+	}
+
+	// write terms to out file
+	t = program->terms;
+	int c = 0;
+	int total_bits = 0;
+	static const char *filler = "0000000";
+	while(t){
+		total_bits = fprintf(program->out, "%s", t->term);
+		while(c < t->child_count){
+			total_bits += fprintf(program->out, "%s", t->child_terms[c]->term);
+			c++;
+		}
+		if(total_bits != WORD_SIZE){
+			fprintf(program->out, "%s", (filler + total_bits) );
+		}
+		fprintf(program->out, "\n");
+		c = 0;
+		t = t->next_term;
+	}
+
+	// check which symbols are not used, generate warnings
+	s = program->tbl->r;
+	while(s){
+		if(!s->used){
+			print_symbol_not_used(s, "Label", program);
+		}
+		s = s->next;
+	}
+	s = program->const_tbl->r;
+	while(s){
+		if(!s->used){
+			print_symbol_not_used(s, "Constant", program);
+		}
+		s = s->next;
+	}
+
 	
 	#ifdef DEBUG
 		// why did we quit?
@@ -155,6 +262,7 @@ void process_token(char *tok, struct program *program){
 		return;
 	}
 
+	// process constant definitions
 	else if(check_const_def(tok, program)){
 		process_const_def(tok, program);
 		return;
@@ -162,46 +270,46 @@ void process_token(char *tok, struct program *program){
 	
 	// the first token should contain our instruction
 	else if(!strcmp(tok, "HALT")){
-		process_instruction(program, HALT, 0, 0, "");
+		process_instruction(program, HALT, 0, 0, 0);
 	}
 	else if(!strcmp(tok, "NOT")){
-		process_instruction(program, NOT, 1, 1, "");
+		process_instruction(program, NOT, 1, 1, 0);
 	}
 	else if(!strcmp(tok, "SHL")){
-		process_instruction(program, SHL, 1, 1, "");
+		process_instruction(program, SHL, 1, 1, 0);
 	}
 	else if(!strcmp(tok, "SHR")){
-		process_instruction(program, SHR, 1, 1, "");
+		process_instruction(program, SHR, 1, 1, 0);
 	}
 	else if(!strcmp(tok, "OR")){
-		process_instruction(program, OR, 2, 1, "");
+		process_instruction(program, OR, 2, 1, 0);
 	}
 	else if(!strcmp(tok, "AND")){
-		process_instruction(program, AND, 2, 1, "");
+		process_instruction(program, AND, 2, 1, 0);
 	}
 	else if(!strcmp(tok, "ADD")){
-		process_instruction(program, ADD, 2, 1, "");
+		process_instruction(program, ADD, 2, 1, 0);
 	}
 	else if(!strcmp(tok, "SW")){
-		process_instruction(program, SW, 1, 0, "");
+		process_instruction(program, SW, 1, 0, 0);
 	}
 	else if(!strcmp(tok, "LW")){
-		process_instruction(program, LW, 0, 1, "");
+		process_instruction(program, LW, 0, 1, 0);
 	}
 	else if(!strcmp(tok, "BEZ")){
-		process_instruction(program, BEZ, 1, 0, "");
+		process_instruction(program, BEZ, 1, 0, 0);
 	}
 	else if(!strcmp(tok, "ROT")){
-		process_instruction(program, ROT, 1, 0, "");
+		process_instruction(program, ROT, 1, 0, 0);
 	}
 	else if(!strcmp(tok, "ROT1")){
-		process_instruction(program, ROT1, 0, 0, "");
+		process_instruction(program, ROT1, 0, 0, 0);
 	}
 	else if(!strcmp(tok, "JMP")){
-		process_instruction(program, JMP, 1, 0, "");
+		process_instruction(program, JMP, 1, 0, 0);
 	}
 	else if(!strcmp(tok, "NOP")){
-		process_instruction(program, NOP, 0, 0, "");
+		process_instruction(program, NOP, 0, 0, 0);
 	}
 	
 	// looks like a bad opcode
@@ -215,23 +323,52 @@ void process_token(char *tok, struct program *program){
 
 void process_instruction(struct program *prog, char *opcode, short src_count, 
 		short dest_count, char *misc){
+
+	// create a term for this instruction
+	struct Term *t = create_term(opcode, strlen(opcode), 
+			src_count + dest_count + (misc ? 1 : 0));
+	if(!t){
+		#ifdef DEBUG
+			fprintf(stderr, "whoops! Looks like a nul-pointer...\n");
+		#endif
+	}
+	struct Term *c;
+	prog->term_count++;
+	t->pos = prog->term_count;
+	
+	// add term to our program
+	if(prog->terms){
+		prog->end_term->next_term = t;
+		prog->end_term = t;
+	}
+	else{
+		prog->terms = t;
+		prog->end_term = t;
+	}
+
+	// registers
 	short src = 0, src2 = 0, dest = 0;
 	if(src_count){
 		src = read_src_reg(prog);
 		if(!src)
 			return;
+		c = create_single_char_term(dtoc(src-1), 0); 
+		add_child_term(c, t, prog);
 	}
 	if(src_count == 2){
 		src2 = read_src_reg(prog);
 		if(!src2)
 			return;
+		c = create_single_char_term(dtoc(src2-1), 0);
+		add_child_term(c, t, prog);
 	}
 	if(dest_count){
 		dest = read_dst_reg(prog);
 		if(!dest)
 			return;
+		c = create_single_char_term(dtoc(dest-1), 0);
+		add_child_term(c, t, prog);
 	}
-	write_instruc_str(opcode, src, src2, dest, misc, prog);
 }
 
 /**
@@ -328,7 +465,8 @@ void write_instruc_str(char *str, short s1, short s2, short dest, char *misc,
 		buf = conv_reg_to_str(buf, dest);
 		total += fprintf(prog->out, "%s", buf);
 	}
-	total += fprintf(prog->out, "%s", misc);
+	if(misc)
+		total += fprintf(prog->out, "%s", misc);
 	free(buf);
 	while(total < WORD_SIZE){
 		fprintf(prog->out, "%d", 0);
@@ -348,6 +486,8 @@ char *conv_reg_to_str(char *buf, short reg){
 	#ifdef DEBUG
 		fprintf(stderr, "%p\n", buf);
 	#endif
+
+	// resize the buffer
 	if(!buf || strlen(buf) != char_count){
 		if(buf)
 			free(buf);
@@ -361,16 +501,15 @@ char *conv_reg_to_str(char *buf, short reg){
 			buf[char_count-1] = '1';
 		else
 			buf[char_count-1] = '0';
+		//reg /= 2;
 		char_count--;
 	}while(char_count);
 	return buf;
 }
 
+void translate_terms(struct Term * term, struct program *prog){
 
-
-
-
-
-
+	
+}
 
 
