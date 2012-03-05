@@ -2,7 +2,7 @@
 #define translator_h_
 
 // debug print control
-#define DEBUG	// general purpose debug messages
+#define DEBUG_	// general purpose debug messages
 
 // Machine Constraints
 #define MAX_REGS		2
@@ -31,6 +31,10 @@
 #define	JMP		"1011"				// next value is a pointer
 #define HALT	"1111000"			// stops all processing
 #define NOP		"1111100"			// consumes a cycle
+
+// Flags
+#define WARNINGS	"-w"
+#define PRINT_SYMS	"-s"
 
 struct program;
 

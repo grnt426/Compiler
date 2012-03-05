@@ -17,12 +17,26 @@
 #include "generrors.h"
 #include "terms.h"
 
+// Argument data
+int warnings = 0;
+int print_tables = 0;
+
 int main(int argc, char **argv){
 	
 	// perform sanity check on arguments
-	if(argc < 3 || argc > 4){
-		fprintf(stderr, "Usage: translator <input_file> [target_exe]\n");
+	if(argc < 3 || argc > 5){
+		fprintf(stderr, "Usage: translator <input_file> <target_exe>"
+				"[warnings] [symbols]\n");
 		return 1;
+	}
+
+	int c = 0;
+	argc -= 3;
+	while(c < argc){
+		if(strcmp(argv[c], WARNINGS) == 0)
+			warnings = 1;
+		else if(strcmp(argv[c], PRINT_SYMS) == 0)
+			print_tables = 1;
 	}
 	
 	// try to open/create the files the user wants us to use
@@ -72,7 +86,8 @@ int main(int argc, char **argv){
 	process_input_program(program);
 	fclose(input_file);
 	fclose(out_file);
-	
+
+	printf("\n");
 	print_symbols(program->tbl);
 	print_symbols(program->const_tbl);
 	
@@ -154,6 +169,8 @@ void process_input_program(struct program *program){
 
 				if( (s = find_symbol(t->term, program->tbl)) ){
 					
+					s->used = 1;
+
 					// we have a label to resolve
 					diff = s->term->pos - t->pos;
 					if(diff < 0){
@@ -166,8 +183,10 @@ void process_input_program(struct program *program){
 					#endif
 					
 				}
-				else if(find_symbol(t->term, program->const_tbl)){
+				else if( (s = find_symbol(t->term, program->const_tbl)) ){
 					
+					s->used = 1;
+
 					// looks like a hardcoded jump value was used
 				}
 				else{
@@ -191,11 +210,27 @@ void process_input_program(struct program *program){
 			c++;
 		}
 		if(total_bits != WORD_SIZE){
-			fprintf(program->out, "%s", filler + total_bits);
+			fprintf(program->out, "%s", (filler + total_bits) );
 		}
 		fprintf(program->out, "\n");
 		c = 0;
 		t = t->next_term;
+	}
+
+	// check which symbols are not used, generate warnings
+	s = program->tbl->r;
+	while(s){
+		if(!s->used){
+			print_symbol_not_used(s, "Label", program);
+		}
+		s = s->next;
+	}
+	s = program->const_tbl->r;
+	while(s){
+		if(!s->used){
+			print_symbol_not_used(s, "Constant", program);
+		}
+		s = s->next;
 	}
 
 	
