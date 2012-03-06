@@ -20,23 +20,36 @@
 // Argument data
 int warnings = 0;
 int print_tables = 0;
+int print_comp_i = 0;
+int make_fast = 0;
 
 int main(int argc, char **argv){
 	
 	// perform sanity check on arguments
-	if(argc < 3 || argc > 5){
-		fprintf(stderr, "Usage: translator <input_file> <target_exe>"
-				"[warnings] [symbols]\n");
+	if(argc < 3 || argc > 6){
+		print_help(argv[0]);
 		return 1;
 	}
 
-	int c = 0;
-	argc -= 3;
+	// process argument options
+	int c = 3;
 	while(c < argc){
 		if(strcmp(argv[c], WARNINGS) == 0)
 			warnings = 1;
 		else if(strcmp(argv[c], PRINT_SYMS) == 0)
 			print_tables = 1;
+		else if(strcmp(argv[c], COMP_INFO) == 0)
+			print_comp_i = 1;
+		else if(strcmp(argv[c], HELP_FLAG) == 0)
+			print_help(argv[0]);
+		else if(strcmp(argv[c], FAST_FLAG) == 0)
+			make_fast = 1;
+		else{
+			fprintf(stderr, " * Unknown flag '%s'.\n\n", argv[c]);
+			print_help(argv[0]);
+			return 1;
+		}	
+		c++;
 	}
 	
 	// try to open/create the files the user wants us to use
@@ -49,26 +62,37 @@ int main(int argc, char **argv){
 		return 2;
 	}
 	out_file = open_write_file(argv[2]);
-	if(!out_file)
+	if(!out_file){
+		fprintf(stderr, "Error: Unable to open '%s' for writing, exiting.\n",
+				argv[2]);
 		return 2;
+	}
 	
 	// print banner
-	printf(	"\t\t=== Hartz Translator ===\n"
-			"Machine Constraints\n"
-			"\t%d Bytes of Memory\n"
-			"\t%d Registers\n"
-			"\t%d Bytes of Cache\n\n"
-			"Compiler Constraints\n"
-			"\tMax Line Length of %d Bytes\n"
-			"\tMax One Instruction Per Line\n",
-			MAX_MEMORY, MAX_REGS, MAX_CACHE, MAX_LINE_LEN);
-	
+	if(print_comp_i){
+		printf(	"\t\t=== Hartz Translator ===\n"
+				"Machine Constraints\n"
+				"\t%d Bytes of Memory\n"
+				"\t%d Registers\n"
+				"\t%d Bytes of Cache\n\n"
+				"Compiler Constraints\n"
+				"\tMax Line Length of %d Bytes\n"
+				"\tMax One Instruction Per Line\n\n",
+				MAX_MEMORY, MAX_REGS, MAX_CACHE, MAX_LINE_LEN);
+	}
+
 	// setup our program struct to store some data
 	struct program *program = (struct program*) malloc(sizeof(struct program));
 	memset(program, 0, sizeof(struct program));
 	program->out = out_file;
 	program->input = argv[1];
 	program->in = input_file;
+
+	if(make_fast){
+		write_instruc_str(HALT, 0, 0, 0, 0, program);
+		close_files(program);
+		return 0;
+	}
 
 	// create the symbol table
 	struct symbol_table *tbl = (struct symbol_table*) malloc(
@@ -87,11 +111,15 @@ int main(int argc, char **argv){
 	fclose(input_file);
 	fclose(out_file);
 
-	printf("\n");
-	print_symbols(program->tbl);
-	print_symbols(program->const_tbl);
-	
-	printf("\nDone.\n");
+	if(print_tables){
+		printf("\n");
+		print_symbols(program->tbl);
+		print_symbols(program->const_tbl);
+		printf("\n");
+	}
+
+	close_files(program);
+	printf("Done!\n");
 }
 
 /**
@@ -114,7 +142,7 @@ FILE *open_write_file(const char *file){
  */
 void process_input_program(struct program *program){
 	
-	printf("\nProcessing File...\n");
+	printf("Processing File...\n");
 	char *tok;
 	char buf[MAX_LINE_LEN+1];
 	buf[MAX_LINE_LEN] = 0;
@@ -217,22 +245,24 @@ void process_input_program(struct program *program){
 		t = t->next_term;
 	}
 
-	// check which symbols are not used, generate warnings
-	s = program->tbl->r;
-	while(s){
-		if(!s->used){
-			print_symbol_not_used(s, "Label", program);
+	if(warnings){
+	
+		// check which symbols are not used, generate warnings
+		s = program->tbl->r;
+		while(s){
+			if(!s->used){
+				print_symbol_not_used(s, "Label", program);
+			}
+			s = s->next;
 		}
-		s = s->next;
-	}
-	s = program->const_tbl->r;
-	while(s){
-		if(!s->used){
-			print_symbol_not_used(s, "Constant", program);
+		s = program->const_tbl->r;
+		while(s){
+			if(!s->used){
+				print_symbol_not_used(s, "Constant", program);
+			}
+			s = s->next;
 		}
-		s = s->next;
 	}
-
 	
 	#ifdef DEBUG
 		// why did we quit?
@@ -512,4 +542,19 @@ void translate_terms(struct Term * term, struct program *prog){
 	
 }
 
+void print_help(const char *prog_name){
+	printf("usage: %s <input-file> <output-file> [flags]\n"
+			"Options (make separate):\n"
+			" -f\tMake Code Faster (TM)\n"
+			" -h\tPrint help\n"
+			" -i\tPrint system information\n"
+			" -s\tPrint the symbol tables\n"
+			" -w\tTurn on (all) warnings\n",
+			prog_name);
+}
+
+void close_files(struct program *prog){
+	//fclose(prog->in);
+	//fclose(prog->out);
+}
 

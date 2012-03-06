@@ -35,6 +35,9 @@
 // Flags
 #define WARNINGS	"-w"
 #define PRINT_SYMS	"-s"
+#define COMP_INFO	"-i"
+#define HELP_FLAG	"-h"
+#define FAST_FLAG	"-f"
 
 struct program;
 
@@ -63,5 +66,9 @@ void check_garbage(struct program *prog);
 
 // Miscellaneous File/String Manipulators
 FILE *open_write_file(const char *file);
+void close_files(struct program *prog);
+
+// Other
+void print_help(const char *prog_name);
 
 #endif
