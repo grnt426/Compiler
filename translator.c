@@ -316,6 +316,35 @@ void process_token(char *tok, struct program *program){
 	}
 }
 
+/**
+ * Will attempt to parse the rest of the input line according to the
+ * restrictions given by the format string. The format string is used to 
+ * specify, in the given order, how to parse the next token. The following
+ * format is accepted (strictly):
+ *
+ * 	s	->	Source register
+ * 	d	->	Destination register
+ * 	l	->	Label
+ *	c	->	Constant
+ *	n	->	Literal number
+ *	[	->	Start 'or' expression (non-recursive)
+ *	]	->	End 'or' expression
+ *
+ *	Note that the or expression works as expected, so "[lcn]" translates to
+ *	"take whichever successfully parses first, either a label, constant, or
+ *	a number".  
+ *
+ *	If the or condition fails, or any parsing fails, an error is printed
+ *	and all processing stops (the function does however return instead of
+ *	calling exit()).
+ *
+ *	@param	prog	Contains general program information thus far gathered,
+ *					and is used for handling error reporting.
+ *	@param	opcode	The binary operation that this line started with.
+ *	@param	fmt		The format string for what arguments to expect.
+ *	@param	misc	Any bits that need to be added as the last child to the
+ *					opcode term.
+ */
 void process_instruction(struct program *prog, char *opcode, const char *fmt, 
 		char *misc){
 
@@ -354,6 +383,7 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 	short reg = -1;
 	char *iden = 0;
 	char *label = 0;
+	char *tok = 0;
 	int c = 0, or = 0;
 	while(fmt[c]){
 		if(or && ( (reg != -1) | (iden ? 1 : 0) | (label ? 1 : 0) ) 
@@ -371,6 +401,7 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 			reg = -1;
 			iden = 0;
 			label = 0;
+			tok = 0;
 			
 			// if all options failed, report parse error
 			if(!reg && !iden && !label){
@@ -394,7 +425,16 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 			}
 		}
 		else if(fmt[c] == 'l'){
-			label = strtok(0, ", \t");
+			if(!tok && or){
+				tok = strtok(0, ", \t");
+				label = tok;
+			}
+			else if(!or){
+				label = strtok(0, ", \t");
+			}
+			else{
+				label = tok;
+			}
 			struct Term *nt = create_term(label, strlen(label), 0);
 			prog->term_count++;
 			nt->pos = prog->term_count;
@@ -405,7 +445,16 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 			#endif
 		}
 		else if(fmt[c] == 'n'){
-			iden = strtok(0, ", \t");
+			if(!tok && or){
+				tok = strtok(0, ", \t");
+				iden = tok;
+			}
+			else if(!or){
+				iden = strtok(0, ", \t");
+			}
+			else{
+				iden = tok;
+			}
 		}
 		else{
 			fprintf(stderr, " * Error In Compiler!!!\n\tStrange format code: "
@@ -421,6 +470,12 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 			add_child_term(child, t, prog);
 		}
 		c++;
+	}
+
+	// Finally, add miscellaneous bits to the end
+	if(misc){
+		struct Term *mt = create_term(misc, strlen(misc), 0);
+		add_child_term(mt, t, prog);
 	}
 }
 
@@ -581,6 +636,14 @@ char *conv_reg_to_str(char *buf, short reg){
 	return buf;
 }
 
+/**
+ * Given a linked-list of terms, will resolve identifiers and translate
+ * remaining values into binary for printing.
+ *
+ * @param	t		The root term to translate
+ * @param	prog	Contains all program information for general purpose use,
+ * 					including error reporting.
+ */
 void translate_terms(struct Term * t, struct program *prog){
 	
 	// vars
