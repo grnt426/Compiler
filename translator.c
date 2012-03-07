@@ -618,7 +618,7 @@ void translate_terms(struct Term * t, struct program *prog){
 					#endif
 
 					if(diff < 0){
-						diff = MAX_MEMORY - diff;
+						diff = MAX_MEMORY + diff;
 					}
 
 					// convert to binary

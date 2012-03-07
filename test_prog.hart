@@ -5,7 +5,6 @@
 #CONST 3
 #DERP 8
 
-JMP		HALT_POINT
 LW 		$d1
 ROT1
 LW 		$d2
@@ -15,4 +14,7 @@ SW 		$s1
 
 HALT_POINT:
 HALT
+
+JMP		HALT_POINT
+
 * Done!
