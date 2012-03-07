@@ -31,6 +31,7 @@ void process_comment();
 
 // Error Reporting
 void print_compiler_error(struct program *prog);
+void print_asterisk(const char *color, FILE *out);
 
 // Identifier Error Reporting
 void print_unexpected_ident(char *ident, struct program *prog);

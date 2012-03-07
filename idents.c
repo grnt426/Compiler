@@ -50,7 +50,7 @@ void process_label_def(char *tok, struct program *prog){
 			fprintf(stderr, "Doubly defined label!\n");
 		}
 		else{
-			add_symbol(iden, prog->line_count, prog->tbl, prog->line_count);
+			add_symbol(iden, prog->line_count, prog->tbl, prog->term_count);
 		}
 	}
 }
@@ -98,6 +98,9 @@ short check_const(char *tok, struct program *prog){
 }
 
 short check_explicit_literal(char *tok, struct program *prog){
+	#ifdef DEBUG
+		fprintf(stderr, "CHECKING TOK: '%s'\n", tok);
+	#endif
 	if(tok[0] == LITERAL_SYM)
 		return 1;
 	return 0;
@@ -124,7 +127,7 @@ short check_comment(char * tok, struct program * prog){
 void print_compiler_error(struct program *prog){
 	char buf[MAX_LINE_LEN+1];
 	buf[MAX_LINE_LEN] = 0;
-	fprintf(stderr, "%s: %d:\n", prog->input, prog->line_count);
+	fprintf(stderr, "%s, %d:\n", prog->input, prog->line_count);
 	
 	// Go back to start of line to show the user where the error occurred.
 	fsetpos(prog->in, &prog->str_line);
@@ -151,5 +154,9 @@ void print_expected_ident(char *ident, char *expected, struct program *prog){
 	print_compiler_error(prog);
 	fprintf(stderr, "\tExpected '%s' but found '%s'.\n", expected, ident);
 	prog->error_code = GARBAGE;
+}
+
+void print_asterisk(const char *color, FILE *out){
+	fprintf(out, RED_C " * " RST_C);
 }
 
