@@ -106,8 +106,9 @@ short check_explicit_literal(char *tok, struct program *prog){
 	return 0;
 }
 
-void process_literal(char *tok, short max_bits, short offset){
-	
+int process_literal(char *tok, int max_val){
+	int val = stonum(tok+1);
+	return val > max_val ? -1 : val;
 }
 
 void blind_consume(){

@@ -597,9 +597,8 @@ void translate_terms(struct Term * t, struct program *prog){
 
 			// the next term specifies an r-pointer
 			t = t->next_term;
-			if(0 /*check_explicit_literal(t->term, prog)*/ ){
-
-				// convert to binary and print
+			if( check_explicit_literal(t->term, prog) ){
+				t->term = numtob(stonum(t->term+1), WORD_SIZE);
 			}
 			else{
 
@@ -611,33 +610,17 @@ void translate_terms(struct Term * t, struct program *prog){
 
 					// we have a label to resolve
 					diff = s->pos - t->pos;
-
-					#ifdef DEBUG
-						fprintf(stderr, "SYM POS: %d, TERM POS: %d\n", s->pos, 
-								t->pos);
-					#endif
-
 					if(diff < 0){
 						diff = MAX_MEMORY + diff;
 					}
-
-					// convert to binary
-					#ifdef DEBUG
-						printf("RESOLVED LABEL, OFFSET: %d\n", diff);
-					#endif
-
-					t->term = numtob(diff, WORD_SIZE);
-
-					#ifdef DEBUG
-						printf("BINARY REP: %s\n", t->term);
-					#endif
-					
+					t->term = numtob(diff, WORD_SIZE);					
 				}
 				else if( (s = find_symbol(t->term, prog->const_tbl)) ){
 					
 					s->used = 1;
 
-					// looks like a hardcoded jump value was used
+					// looks like a constant was used
+					t->term = numtob(s->val, WORD_SIZE);
 				}
 				else{
 					// TODO: use the standard print_compiler_error message

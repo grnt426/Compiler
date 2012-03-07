@@ -24,6 +24,7 @@ short check_const(char *tok, struct program *prog);
 
 // literals
 short check_explicit_literal(char *tok, struct program *prog);
+int process_literal(char *tok, int max_val);
 
 // Comment Processing Functions
 short check_comment(char * tok, struct program *prog);
