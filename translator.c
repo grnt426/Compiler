@@ -45,7 +45,8 @@ int main(int argc, char **argv){
 		else if(strcmp(argv[c], FAST_FLAG) == 0)
 			make_fast = 1;
 		else{
-			fprintf(stderr, " * Unknown flag '%s'.\n\n", argv[c]);
+			print_asterisk(RED_C, stderr);
+			fprintf(stderr, "Unknown flag '%s'.\n\n", argv[c]);
 			print_help(argv[0]);
 			return 1;
 		}	
@@ -57,8 +58,9 @@ int main(int argc, char **argv){
 	FILE *out_file = 0;
 	
 	if(!input_file){
-		fprintf(stderr, "Error: Unable to open '%s' for reading, exiting.\n",
-				argv[1]);
+		print_asterisk(RED_C, stderr);
+		fprintf(stderr, "Error: Unable to open '%s' for "
+				"reading, exiting.\n", argv[1]);
 		return 2;
 	}
 	out_file = open_write_file(argv[2]);
@@ -90,7 +92,8 @@ int main(int argc, char **argv){
 
 	if(make_fast){
 		write_instruc_str(HALT, 0, 0, 0, 0, program);
-		close_files(program);
+		fclose(input_file);
+		fclose(out_file);
 		return 0;
 	}
 
@@ -118,8 +121,11 @@ int main(int argc, char **argv){
 		printf("\n");
 	}
 
-	close_files(program);
-	printf("Done!\n");
+	if(program->error_code){
+		fprintf(stderr, " * Stopped processing because of an error.\n");
+	}
+	else
+		printf("Done!\n");
 }
 
 /**
@@ -177,63 +183,22 @@ void process_input_program(struct program *program){
 		return;
 
 	// resolve constants/labels
-	struct Term *t = program->terms;
-	struct symbol *s;
-	int diff;
-	while(t){
-		
-		// example code for dealing with JMP instructions
-		if(strcmp(t->term, JMP) == 0){
-			
-			// extract the multiplier
-
-			// the next term specifies an r-pointer
-			t = t->next_term;
-			if(check_explicit_literal(t->term, program)){
-
-				// convert to binary and print
-			}
-			else{
-
-				if( (s = find_symbol(t->term, program->tbl)) ){
-					
-					s->used = 1;
-
-					// we have a label to resolve
-					diff = s->term->pos - t->pos;
-					if(diff < 0){
-						diff = MAX_MEMORY - diff;
-					}
-
-					// convert to binary, print
-					#ifdef DEBUG
-						printf("RESOLVED LABEL, OFFSET: %d\n", diff);
-					#endif
-					
-				}
-				else if( (s = find_symbol(t->term, program->const_tbl)) ){
-					
-					s->used = 1;
-
-					// looks like a hardcoded jump value was used
-				}
-				else{
-					// TODO: use the standard print_compiler_error message
-					print_symbol_not_found(t->term, program);
-				}
-			}
-		}
-		t = t->next_term;
-	}
+	translate_terms(program->terms, program);
 
 	// write terms to out file
-	t = program->terms;
+	struct Term *t = program->terms;
 	int c = 0;
 	int total_bits = 0;
 	static const char *filler = "0000000";
 	while(t){
+		#ifdef DEBUG
+			fprintf(stderr, "NEXT TERM! %d\n", t->child_count);
+		#endif
 		total_bits = fprintf(program->out, "%s", t->term);
-		while(c < t->child_count){
+		while(c < t->child_count && t->child_terms[c]){
+			#ifdef DEBUG
+				fprintf(stderr, "CHILD TERM %p\n", t->child_terms[c]);
+			#endif
 			total_bits += fprintf(program->out, "%s", t->child_terms[c]->term);
 			c++;
 		}
@@ -248,7 +213,7 @@ void process_input_program(struct program *program){
 	if(warnings){
 	
 		// check which symbols are not used, generate warnings
-		s = program->tbl->r;
+		struct symbol *s = program->tbl->r;
 		while(s){
 			if(!s->used){
 				print_symbol_not_used(s, "Label", program);
@@ -300,46 +265,46 @@ void process_token(char *tok, struct program *program){
 	
 	// the first token should contain our instruction
 	else if(!strcmp(tok, "HALT")){
-		process_instruction(program, HALT, 0, 0, 0);
+		process_instruction(program, HALT, HALT_F , 0);
 	}
 	else if(!strcmp(tok, "NOT")){
-		process_instruction(program, NOT, 1, 1, 0);
+		process_instruction(program, NOT, NOT_F, 0);
 	}
 	else if(!strcmp(tok, "SHL")){
-		process_instruction(program, SHL, 1, 1, 0);
+		process_instruction(program, SHL, SHL_F, 0);
 	}
 	else if(!strcmp(tok, "SHR")){
-		process_instruction(program, SHR, 1, 1, 0);
+		process_instruction(program, SHR, SHR_F, 0);
 	}
 	else if(!strcmp(tok, "OR")){
-		process_instruction(program, OR, 2, 1, 0);
+		process_instruction(program, OR, OR_F, 0);
 	}
 	else if(!strcmp(tok, "AND")){
-		process_instruction(program, AND, 2, 1, 0);
+		process_instruction(program, AND, AND_F, 0);
 	}
 	else if(!strcmp(tok, "ADD")){
-		process_instruction(program, ADD, 2, 1, 0);
+		process_instruction(program, ADD, ADD_F, 0);
 	}
 	else if(!strcmp(tok, "SW")){
-		process_instruction(program, SW, 1, 0, 0);
+		process_instruction(program, SW, SW_F, 0);
 	}
 	else if(!strcmp(tok, "LW")){
-		process_instruction(program, LW, 0, 1, 0);
+		process_instruction(program, LW, LW_F, 0);
 	}
 	else if(!strcmp(tok, "BEZ")){
-		process_instruction(program, BEZ, 1, 0, 0);
+		process_instruction(program, BEZ, BEZ_F, 0);
 	}
 	else if(!strcmp(tok, "ROT")){
-		process_instruction(program, ROT, 1, 0, 0);
+		process_instruction(program, ROT, ROT_F, 0);
 	}
 	else if(!strcmp(tok, "ROT1")){
-		process_instruction(program, ROT1, 0, 0, 0);
+		process_instruction(program, ROT1, ROT1_F, 0);
 	}
 	else if(!strcmp(tok, "JMP")){
-		process_instruction(program, JMP, 1, 0, 0);
+		process_instruction(program, JMP, JMP_F, 0);
 	}
 	else if(!strcmp(tok, "NOP")){
-		process_instruction(program, NOP, 0, 0, 0);
+		process_instruction(program, NOP, JMP_F, 0);
 	}
 	
 	// looks like a bad opcode
@@ -351,18 +316,19 @@ void process_token(char *tok, struct program *program){
 	}
 }
 
-void process_instruction(struct program *prog, char *opcode, short src_count, 
-		short dest_count, char *misc){
+void process_instruction(struct program *prog, char *opcode, const char *fmt, 
+		char *misc){
 
 	// create a term for this instruction
-	struct Term *t = create_term(opcode, strlen(opcode), 
-			src_count + dest_count + (misc ? 1 : 0));
+	struct Term *t = create_term(opcode, strlen(opcode), 0);
 	if(!t){
 		#ifdef DEBUG
 			fprintf(stderr, "whoops! Looks like a nul-pointer...\n");
 		#endif
+		prog->error_code = -1;
+		return;
 	}
-	struct Term *c;
+	struct Term *child;
 	prog->term_count++;
 	t->pos = prog->term_count;
 	
@@ -376,28 +342,85 @@ void process_instruction(struct program *prog, char *opcode, short src_count,
 		prog->end_term = t;
 	}
 
-	// registers
-	short src = 0, src2 = 0, dest = 0;
-	if(src_count){
-		src = read_src_reg(prog);
-		if(!src)
-			return;
-		c = create_single_char_term(dtoc(src-1), 0); 
-		add_child_term(c, t, prog);
-	}
-	if(src_count == 2){
-		src2 = read_src_reg(prog);
-		if(!src2)
-			return;
-		c = create_single_char_term(dtoc(src2-1), 0);
-		add_child_term(c, t, prog);
-	}
-	if(dest_count){
-		dest = read_dst_reg(prog);
-		if(!dest)
-			return;
-		c = create_single_char_term(dtoc(dest-1), 0);
-		add_child_term(c, t, prog);
+	if(!*opcode)
+		return;
+
+
+	#ifdef DEBUG
+		fprintf(stderr, "FMT CODE: '%s'.\n", fmt);
+	#endif
+
+	// opcode argument parsing
+	short reg = -1;
+	char *iden = 0;
+	char *label = 0;
+	int c = 0, or = 0;
+	while(fmt[c]){
+		if(or && ( (reg != -1) | (iden ? 1 : 0) | (label ? 1 : 0) ) 
+				&& fmt[c] != ']'){
+			#ifdef DEBUG
+				fprintf(stderr, "DOING NOTHING!\n%d\n%p\n%p\n", reg, iden, 
+						label);
+			#endif
+		}
+		else if(fmt[c] == '['){
+			or = 1;
+		}
+		else if(fmt[c] == ']'){
+			or = 0;
+			reg = -1;
+			iden = 0;
+			label = 0;
+			
+			// if all options failed, report parse error
+			if(!reg && !iden && !label){
+				// TODO: create standardized error reporting....
+				print_compiler_error(prog);
+				fprintf(stderr, "\tUnexpected opcode argument.\n");
+				prog->error_code = GARBAGE;
+				return;
+			}
+		}
+		else if(fmt[c] == 's'){
+			reg = read_src_reg(prog, or);
+			if(!or && reg == -1){
+				return;
+			}
+		}
+		else if(fmt[c] == 'd'){
+			reg = read_dst_reg(prog, or);
+			if(!or && reg == -1){
+				return;
+			}
+		}
+		else if(fmt[c] == 'l'){
+			label = strtok(0, ", \t");
+			struct Term *nt = create_term(label, strlen(label), 0);
+			prog->term_count++;
+			nt->pos = prog->term_count;
+			prog->end_term->next_term = nt;
+			prog->end_term = nt;
+			#ifdef DEBUG
+				fprintf(stderr, "GOTS A LABEL!\n");
+			#endif
+		}
+		else if(fmt[c] == 'n'){
+			iden = strtok(0, ", \t");
+		}
+		else{
+			fprintf(stderr, " * Error In Compiler!!!\n\tStrange format code: "
+					"'%c'.\n", fmt[c]);
+		}
+
+		if(reg != -1){
+			child = create_single_char_term(dtoc(reg-1), 0);
+			add_child_term(child, t, prog);	
+		}
+		else if(iden){
+			child = create_term(iden, strlen(iden), 0);
+			add_child_term(child, t, prog);
+		}
+		c++;
 	}
 }
 
@@ -427,13 +450,21 @@ void write_str(char *str, FILE *out){
  *		$S<x>
  * Note, that x MUST be between 1 and MAX_REGS (inclusively). The token is 
  * rejected if all 3 characters are not of the given format.
+ *
+ * @param	prog		Used for error reporting
+ * @param	suppress	suppresses error messages if 1
+ * @return				-1 on failure, otherwise the numbered register that 
+ * 						was parsed.
  */
-short read_src_reg(struct program *prog){
-	char *tok = read_reg(prog);
+short read_src_reg(struct program *prog, short suppress){
+	char *tok = read_reg(prog, suppress);
+	if(!tok)
+		return -1;
 	short reg = 0;
 	if(tok[1] != 'S' || !(reg = atoi(tok+2)) || reg > MAX_REGS || 
 			reg < 1){
 		print_expected_ident(tok, "$Sx", prog);
+		return -1;
 	}
 	return reg;
 }
@@ -444,13 +475,21 @@ short read_src_reg(struct program *prog){
  *		$D<x>
  * Note, that x MUST be between 1 and MAX_REGS (inclusively). The token is
  * rejected if all 3 characters are not of the given format.
+ *
+ * @param	prog		Used for error reporting
+ * @param	suppress	suppresses error messages if 1
+ * @return				-1 on failure, otherwise the numbered register that 
+ * 						was parsed.
  */
-short read_dst_reg(struct program *prog){
-	char *tok = read_reg(prog);
+short read_dst_reg(struct program *prog, short suppress){
+	char *tok = read_reg(prog, suppress);
+	if(!tok)
+		return -1;
 	short reg = 0;
 	if(tok[1] != 'D' || !(reg = atoi(tok+2)) || reg > MAX_REGS || 
 			reg < 1){
 		print_expected_ident(tok, "$Dx", prog);
+		return -1;
 	}
 	return reg;
 }
@@ -459,9 +498,14 @@ short read_dst_reg(struct program *prog){
  * A general purpose function for ensuring the current token is of a valid 
  * register type. Note, the token is rejected if the register is not exactly 3
  * characters or does not start with a '$'.
+ *
+ * @param	prog		Used for error reporting
+ * @param	suppress	suppresses error messages if 1
+ * @return				0 on failure, otherwise the register string that was
+ * 						parsed.
  */
-char *read_reg(struct program *prog){
-	char * tok = strtok(0, ", ");
+char *read_reg(struct program *prog, short suppress){
+	char * tok = strtok(0, ", \t");
 	trimwhitespace(tok);
 	
 	// should only be 3 characters (may change, but sufficient for now)
@@ -531,15 +575,79 @@ char *conv_reg_to_str(char *buf, short reg){
 			buf[char_count-1] = '1';
 		else
 			buf[char_count-1] = '0';
-		//reg /= 2;
+		reg /= 2;
 		char_count--;
 	}while(char_count);
 	return buf;
 }
 
-void translate_terms(struct Term * term, struct program *prog){
-
+void translate_terms(struct Term * t, struct program *prog){
 	
+	// vars
+	struct symbol *s;
+	int diff;
+
+	// consume all terms
+	while(t){
+		
+		// example code for dealing with JMP instructions
+		if(strcmp(t->term, JMP) == 0){
+
+			// extract the multiplier
+
+			// the next term specifies an r-pointer
+			t = t->next_term;
+			if(0 /*check_explicit_literal(t->term, prog)*/ ){
+
+				// convert to binary and print
+			}
+			else{
+
+				// We have a symbol to parse
+				if( (s = find_symbol(t->term, prog->tbl)) ){
+					
+					// mark as used
+					s->used = 1;
+
+					// we have a label to resolve
+					diff = s->pos - t->pos;
+
+					#ifdef DEBUG
+						fprintf(stderr, "SYM POS: %d, TERM POS: %d\n", s->pos, 
+								t->pos);
+					#endif
+
+					if(diff < 0){
+						diff = MAX_MEMORY - diff;
+					}
+
+					// convert to binary
+					#ifdef DEBUG
+						printf("RESOLVED LABEL, OFFSET: %d\n", diff);
+					#endif
+
+					t->term = numtob(diff, WORD_SIZE);
+
+					#ifdef DEBUG
+						printf("BINARY REP: %s\n", t->term);
+					#endif
+					
+				}
+				else if( (s = find_symbol(t->term, prog->const_tbl)) ){
+					
+					s->used = 1;
+
+					// looks like a hardcoded jump value was used
+				}
+				else{
+					// TODO: use the standard print_compiler_error message
+					print_symbol_not_found(t->term, prog);
+				}
+			}
+		}
+		t = t->next_term;
+	}
+
 }
 
 void print_help(const char *prog_name){
@@ -553,8 +661,6 @@ void print_help(const char *prog_name){
 			prog_name);
 }
 
-void close_files(struct program *prog){
-	//fclose(prog->in);
-	//fclose(prog->out);
-}
+
+
 

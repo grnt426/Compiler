@@ -2,7 +2,7 @@
 #define translator_h_
 
 // debug print control
-#define DEBUG_	// general purpose debug messages
+#define DEBUG	// general purpose debug messages
 
 // Machine Constraints
 #define MAX_REGS		2
@@ -32,6 +32,22 @@
 #define HALT	"1111000"			// stops all processing
 #define NOP		"1111100"			// consumes a cycle
 
+// Instruction Format Codes
+#define NOT_F	"sd"
+#define SHL_F	"sd"
+#define SHR_F	"sd"
+#define OR_F	"ssd"
+#define AND_F	"ssd"
+#define ADD_F	"ssd"
+#define SW_F	"s"
+#define	LW_F	"d"
+#define BEZ_F	"sl"
+#define ROT_F	"s"
+#define ROT1_F	""
+#define JMP_F	"[lcn]"
+#define NOP_F	""
+#define HALT_F	""
+
 // Flags
 #define WARNINGS	"-w"
 #define PRINT_SYMS	"-s"
@@ -40,6 +56,7 @@
 #define FAST_FLAG	"-f"
 
 struct program;
+struct Term;
 
 // Compilation Functions
 void process_input_program(struct program *prog);
@@ -51,14 +68,16 @@ void write_instruc_str(char *str, short s1, short s2, short dest, char *misc,
 
 // Instruction Processing Fucntions
 void process_token(char *tok, struct program *prog);
-void process_instruction(struct program *prog, char *opcode, short src_count, 
-		short dest_count, char *misc);
+void process_instruction(struct program *prog, char *opcode, const char *fmt, 
+		char *misc);
 
+// Term translation
+void translate_terms(struct Term *t, struct program *prog);
 
 // Register Processing Instructions
-short read_src_reg(struct program *prog);
-short read_dst_reg(struct program *prog);
-char *read_reg(struct program *prog);
+short read_src_reg(struct program *prog, short suppress);
+short read_dst_reg(struct program *prog, short suppress);
+char *read_reg(struct program *prog, short suppress);
 char *conv_reg_to_str(char *buf, short reg);
 
 // Error Handling Functions
@@ -66,7 +85,6 @@ void check_garbage(struct program *prog);
 
 // Miscellaneous File/String Manipulators
 FILE *open_write_file(const char *file);
-void close_files(struct program *prog);
 
 // Other
 void print_help(const char *prog_name);
