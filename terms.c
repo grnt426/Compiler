@@ -22,20 +22,27 @@ void add_child_term(struct Term *child, struct Term *parent,
 
 	// just in case...
 	if(!parent->child_terms){
-		print_fault("Parent term has no allocated children!", prog);
-		return;
+		parent->child_terms = 
+				(struct Term **) malloc(3 * sizeof(struct Term*));
+		memset(parent->child_terms, 0, 3);
+		parent->child_count = 3;
 	}
 
 	int i = 0;
-	while(parent->child_terms[i] != 0){
+	while(i < parent->child_count && parent->child_terms[i] != 0){
 		++i;
 	}
 
 	// just a small protection measure
-	if(parent->child_terms[i] == 0)
+	if(i < parent->child_count)
 		parent->child_terms[i] = child;
-	else
-		print_fault("Parent has no room for the new child!", prog);
+	else{
+		// resize, add to end
+		parent->child_terms = (struct Term **) realloc(parent->child_terms,
+				(parent->child_count * .75) * sizeof(struct Term*));
+		parent->child_terms[parent->child_count] = child;
+		parent->child_count = parent->child_count * .75;
+	}
 }
 
 struct Term* create_term(char* term, unsigned int term_len, int children){
