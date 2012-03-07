@@ -65,6 +65,7 @@ int main(int argc, char **argv){
 	}
 	out_file = open_write_file(argv[2]);
 	if(!out_file){
+		print_asterisk(RED_C, stderr);
 		fprintf(stderr, "Error: Unable to open '%s' for writing, exiting.\n",
 				argv[2]);
 		return 2;
@@ -122,10 +123,13 @@ int main(int argc, char **argv){
 	}
 
 	if(program->error_code){
-		fprintf(stderr, " * Stopped processing because of an error.\n");
+		print_asterisk(RED_C, stderr);
+		fprintf(stderr, "Stopped processing because of an error.\n");
 	}
-	else
+	else{
+		print_asterisk(GRN_C, stdout);
 		printf("Done!\n");
+	}
 }
 
 /**
@@ -135,8 +139,7 @@ FILE *open_write_file(const char *file){
 	FILE *out_file = 0;
 	out_file = fopen(file, "w");
 	if(!out_file){
-		fprintf(stderr, "Error: Unable to open '%s' for writing, "
-				"exiting.\n", file);
+		return 0;
 	}
 	return out_file;
 }
@@ -148,6 +151,7 @@ FILE *open_write_file(const char *file){
 */
 void process_input_program(struct program *program){
 
+	print_asterisk(GRN_C, stdout);
 	printf("Processing File...\n");
 	char *tok;
 	char buf[MAX_LINE_LEN+1];
@@ -322,11 +326,11 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 	// create a term for this instruction
 	struct Term *t = create_term(opcode, strlen(opcode), 0);
 	if(!t){
-	#ifdef DEBUG
-	fprintf(stderr, "whoops! Looks like a nul-pointer...\n");
-	#endif
-	prog->error_code = -1;
-	return;
+		#ifdef DEBUG
+			fprintf(stderr, "whoops! Looks like a nul-pointer...\n");
+		#endif
+		prog->error_code = -1;
+		return;
 	}
 	struct Term *child;
 	prog->term_count++;
@@ -334,16 +338,16 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 
 	// add term to our program
 	if(prog->terms){
-	prog->end_term->next_term = t;
-	prog->end_term = t;
+		prog->end_term->next_term = t;
+		prog->end_term = t;
 	}
 	else{
-	prog->terms = t;
-	prog->end_term = t;
+		prog->terms = t;
+		prog->end_term = t;
 	}
 
 	if(!*opcode)
-	return;
+		return;
 
 
 	#ifdef DEBUG
@@ -377,7 +381,8 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 			// if all options failed, report parse error
 			if(!reg && !iden && !label){
 				// TODO: create standardized error reporting....
-				print_compiler_error(prog);
+				print_compiler_error(prog, RED_C);
+				print_asterisk(RED_C, stderr);
 				fprintf(stderr, "\tUnexpected opcode argument.\n");
 				prog->error_code = GARBAGE;
 				return;
@@ -704,17 +709,17 @@ void write_terms(struct Term *t, struct program *program){
 void check_warnings(struct program *prog){
 
 	// check which symbols are not used, generate warnings
-	struct symbol *s = program->tbl->r;
+	struct symbol *s = prog->tbl->r;
 	while(s){
 		if(!s->used){
-			print_symbol_not_used(s, "Label", program);
+			print_symbol_not_used(s, "Label", prog);
 		}
 		s = s->next;
 	}
-	s = program->const_tbl->r;
+	s = prog->const_tbl->r;
 	while(s){
 		if(!s->used){
-			print_symbol_not_used(s, "Constant", program);
+			print_symbol_not_used(s, "Constant", prog);
 		}
 		s = s->next;
 	}
