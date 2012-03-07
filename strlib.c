@@ -40,6 +40,19 @@ void strtoupper(char *str, int len){
 	}
 }
 
+int letter_count(const char *str){
+	int count = 0;
+	int c = 0;
+	while(str[c]){
+		if( (str[c] >= 'a' && str[c] <= 'z') || 
+				(str[c] >= 'A' && str[c] <= 'Z') ){
+			count++;
+		}
+		c++;
+	}
+	return count;
+}
+
 /**
  * Will process the first token of the given input buffer (or return the next
  * token of the previously provided buffer if buf is 0), trim whitespace, 
@@ -92,6 +105,39 @@ char *numtos(int num){
 }
 
 /**
+ * Converts a base-10 (positive) integer to base-2. Note that the left most
+ * bit is the most significant bit.
+ * @param	num			The number to parse
+ * @param	min_size	The minimum number of bits to show.
+ * @return				The converted base-10 value.
+ */
+char *numtob(int num, int min_size){
+	
+	// vars
+	char *bin = malloc(33);
+	memset(bin, '0', 33);
+	bin[32] = 0;
+	int pos = 31;
+
+	// reduce to base two
+	do{
+		if(num % 2)
+			bin[pos] = '1';
+		else
+			bin[pos] = '0';
+		pos--;
+	}while(num /= 2);
+	
+	// make the buffer as small as possible
+	min_size = min_size < 32 - pos ? 32 - pos : min_size;
+	char *ret_bin = malloc(min_size + 1);
+	memset(ret_bin, '0', min_size);
+	ret_bin[min_size] = 0;
+	memcpy(ret_bin + (min_size - (32 - pos) + 1), bin + pos + 1, min_size + 1);
+	return ret_bin;
+}
+
+/**
  * Returns the number of digits in the given number.
  *
  * @param	num		The number to parse.
@@ -99,5 +145,46 @@ char *numtos(int num){
  */
 int numd(int num){
 	return (num == 0) ? 1 : (int) log10((double)num)+1;
+}
+
+/**
+ * Converts a string of numerical digits (0-9) into a signed integer.
+ * @param	s		The string to convert.
+ * @return			The signed integer on success, otherwise 0 is returned.
+ */
+int stonum(char *s){
+
+	// vars
+	int num = 0;
+	int d;
+
+	// check if we need to sign it
+	int c = 0;
+	if(s[0] == '-')
+		c = 1;
+	
+	// convert
+	while(s[c]){
+		d = ctod(*s);
+		if(d < 0)
+			return 0;
+		num += d;
+		c++;
+	}
+
+	// sign the value
+	if(s[0] == '-')
+		num *= -1;
+	return num;
+}
+
+/**
+ * Converts the numerical character into integer form.
+ * @param	c		The character t oconvert
+ * @return			-1 if the character is not numerical, otherwise the
+ * 					returned value is given.
+ */
+int ctod(char c){
+	return c >= 0 && c <= 9 ? -1 : c - '0';
 }
 
