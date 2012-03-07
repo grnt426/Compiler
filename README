@@ -1,1 +1,47 @@
-Will be updated later...
+== Description ==
+A compiler that translates C-style code into Hartz assembly, which can then be
+further compiled into a "binary executable" for a theoretical Minecraft 
+CPU that is (and probably forever will be) in development. The idea is to 
+support basic C-Style language constructs such as "if-else" branches, 
+arithmetic, do-while loops, and function calls. The whole purpose of all this
+is to gain an understanding of compilers and to specifically create a working
+compiler for a highly limited machine (in both resources and instructions
+available).
+
+== Documentation ==
+Author: 		Grant Kurtz
+Created:		Dec 2012
+
+The following categories breakdown into relevant sections for compilation.
+
+	=== Hartz Instruction Set ===
+	This lays out, albeit crudely, all the definitions of planned and
+	currently supported hardware instructions, machine contraints, and some
+	example code.
+
+	* Hartz Instruction Set.txt
+
+	=== Productions ===
+	A list of productions that form all the language constructs that the
+	C-Style compiler will break down.
+
+	(Not Yet Added)
+
+== Software Dependencies ==
+gcc v4.3.4
+
+== Compiling ==
+make [all|hartz|ccode]
+
+== Running ==
+
+	=== Hartz Translator ===
+	./translator (in-file) (out-file)
+
+	=== C-Style Code Compiler ===
+	./compiler
+
+== Compilation Platform ==
+Linux Version:		2.6.32-gentoo-r7
+gcc (Gentoo 4.3.4 p1.1, pie-10.1.5) 4.3.4
+

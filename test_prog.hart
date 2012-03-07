@@ -14,4 +14,7 @@ SW 		$s1
 
 HALT_POINT:
 HALT
+
+JMP		HALT_POIN
+
 * Done!
