@@ -31,7 +31,7 @@ short check_comment(char * tok, struct program *prog);
 void process_comment();
 
 // Error Reporting
-void print_compiler_error(struct program *prog);
+void print_compiler_error(struct program *prog, const char *color);
 void print_asterisk(const char *color, FILE *out);
 
 // Identifier Error Reporting

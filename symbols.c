@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "symbols.h"
+#include "idents.h"
+#include "strlib.h"
 
 void add_symbol(char *iden, int val, struct symbol_table *tbl, int pos){
 	if(!tbl)
@@ -83,6 +85,9 @@ void print_symbols(struct symbol_table *tbl){
 }
 
 void print_symbol_not_found(const char *bad_sym, struct program *prog){
+	print_asterisk(RED_C, stderr);
+	fprintf(stderr, "%s:\n", prog->input);
+	print_asterisk(RED_C, stderr);
 	fprintf(stderr, "\tUnknown Symbol '%s'.\n", bad_sym);
 	prog->error_code = -1; // TODO: create actual error_code 
 
@@ -91,8 +96,9 @@ void print_symbol_not_found(const char *bad_sym, struct program *prog){
 
 void print_symbol_not_used(const struct symbol *sym, const char *sym_type, 
 		const struct program *prog){
-	
-	fprintf(stderr, "%s: %d:\n", prog->input, sym->pos);
+	print_asterisk(YLW_C, stderr);
+	fprintf(stderr, "%s, %d:\n", prog->input, sym->pos);
+	print_asterisk(YLW_C, stderr);
 	fprintf(stderr, "\tWarning: %s '%s' is not used.\n", sym_type, sym->iden);
 }
 
