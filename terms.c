@@ -23,9 +23,9 @@ void add_child_term(struct Term *child, struct Term *parent,
 	// just in case...
 	if(!parent->child_terms){
 		parent->child_terms = 
-				(struct Term **) malloc(3 * sizeof(struct Term*));
-		memset(parent->child_terms, 0, 3);
-		parent->child_count = 3;
+				(struct Term **) malloc(4 * sizeof(struct Term*));
+		memset(parent->child_terms, 0, 4);
+		parent->child_count = 4;
 	}
 
 	int i = 0;
