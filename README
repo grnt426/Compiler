@@ -41,6 +41,49 @@ make [all|hartz|ccode]
 	=== C-Style Code Compiler ===
 	./compiler
 
+== Automated Testing ==
+This section documents how to use, read, and understand the automated testing
+scripts.
+
+	=== Compiling Test Scripts ===
+	make [all|test]
+
+	=== Running Tests ===
+	By defualt, this will run all tests
+	./test
+
+	=== Example Input Files ===
+	These are example programs that test the translator:
+		test_input/test.*
+
+	=== Example Output Files ===
+	These files are what the translator should print as file output:
+		test_output/test.*
+
+	These files are what the translator should print to stdout/err:
+		test_stdout/test.*
+		test_stderr/test.*
+	
+	=== Resulsts of Tests ===
+	All test results from the last run instance of ./test are stored here:
+		test_results/
+	
+		==== Binary Output Results ====
+		test_results/test.*.b
+
+		==== Stdout/err Results ====
+		test_results/test.*.out
+		test_results/test.*.err
+
+	=== Output From Test Program ===
+	The test program will make sure the environment is sane before trying, and
+	then run all test input files against the executable.  Lines are compared
+	individually, with any descrepencies being reported and marking the test
+	as a failure.  If 50% or more of the tests fail, the summary will print
+	a red asterisk, if any tests failed but less than 50% then a yellow
+	asterisk is printed, and finally if no tests failed a green asterisk is
+	printed at the end of all testing.
+
 == Compilation Platform ==
 Linux Version:		2.6.32-gentoo-r7
 gcc (Gentoo 4.3.4 p1.1, pie-10.1.5) 4.3.4
