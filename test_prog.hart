@@ -5,16 +5,18 @@
 #CONST 3
 #DERP 8
 
+START:
 LW 		$d1
 ROT1
 LW 		$d2
 ADD 	$s1, $s2, $d1 *DERP HERP
+BEZ		$s1, START
 ROT1
 SW 		$s1
 
 HALT_POINT:
 HALT
 
-JMP		HALT_POIN
+JMP		HALT_POINT
 
 * Done!
