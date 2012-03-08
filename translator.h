@@ -2,7 +2,7 @@
 #define translator_h_
 
 // debug print control
-#define DEBUG_ // general purpose debug messages
+#define DEBUG // general purpose debug messages
 
 // Machine Constraints
 #define MAX_REGS 2
@@ -41,7 +41,7 @@
 #define ADD_F "ssd"
 #define SW_F "s"
 #define LW_F "d"
-#define BEZ_F "sl"
+#define BEZ_F "s[lcn]"
 #define ROT_F "s"
 #define ROT1_F ""
 #define JMP_F "[lcn]"
