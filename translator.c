@@ -706,6 +706,12 @@ void write_terms(struct Term *t, struct program *program){
 	}
 }
 
+/**
+ * Checks for unused symbols in the constant table and in the identifiers
+ * table.
+ * @param	prog		Contains all the relevant symbol tables to check for
+ * 						unused symbols.
+ */
 void check_warnings(struct program *prog){
 
 	// check which symbols are not used, generate warnings
