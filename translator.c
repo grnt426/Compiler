@@ -220,18 +220,17 @@ void process_input_program(struct program *program){
 */
 void process_token(char *tok, struct program *program){
 
+	// check for comments
+	if(check_comment(tok, program)){
+		process_comment(program);
+		return;
+	}
+
 	// check if we have a label
-	if(check_label_def(tok, program)){
+	else if(check_label_def(tok, program)){
 		process_label_def(tok, program);
 		return;
 	}
-
-	// check for comments
-	else if(check_comment(tok, program)){
-		process_comment(tok, program);
-		return;
-	}
-
 	// process constant definitions
 	else if(check_const_def(tok, program)){
 		process_const_def(tok, program);

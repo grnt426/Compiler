@@ -20,14 +20,10 @@ short check_label_def(char *tok, struct program *prog){
 	return 0;
 }
 
-void process_comment(){
-	#ifdef DEBUG
-		// fprintf(stderr, "Ignoring comment on line %d\n", 
-				// prog->line_count);
-	#endif
-		
+void process_comment(struct program *prog){
+	
 	// Just eat the rest of the string
-	blind_consume();
+	blind_consume(prog);
 }
 
 void process_label_def(char *tok, struct program *prog){
@@ -111,13 +107,19 @@ int process_literal(char *tok, int max_val){
 	return val > max_val ? -1 : val;
 }
 
-void blind_consume(){
-	while(strtok(0, STR_TOK_SEP));
+void blind_consume(struct program *prog){
+	char * buf;
+	while(1){
+		buf = strtok(0, ", \t\n");
+		if(!buf)
+			break;
+	}
 }
 
 short check_comment(char * tok, struct program * prog){
-	if(tok[0] == COMMENT_SYM)
+	if(tok[0] == COMMENT_SYM){
 		return 1;
+	}
 	return 0;
 }
 

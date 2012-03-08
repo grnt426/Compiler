@@ -2,7 +2,7 @@
 #define translator_h_
 
 // debug print control
-#define DEBUG // general purpose debug messages
+#define DEBUG_ // general purpose debug messages
 
 // Machine Constraints
 #define MAX_REGS 2
