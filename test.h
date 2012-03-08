@@ -22,7 +22,9 @@ void print_status(const char *color, const char *indent, FILE *out);
 void cleanup_older();
 short check_executable();
 void run_test(char *exec, int test_num);
-void compare_results(int test_num);
+int compare_results(int test_num);
+void print_test_failed();
+void print_test_success();
 
 #endif
 

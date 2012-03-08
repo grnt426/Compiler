@@ -48,7 +48,7 @@ int main(int argc, char **argv){
 	}
 
 	print_status(WHT_C, 0, stdout);
-	printf("Test Complete\n");
+	printf("Test Complete.\n");
 }
 
 short check_files(int test_num){
@@ -84,7 +84,6 @@ void run_test(char *exec, int test_num){
 			exit(1);
 
 		case 0:
-			printf("Executing Child...\n");
 			
 			// setup file redirects
 			outbuf = (char *) malloc(64);
@@ -127,8 +126,78 @@ void run_test(char *exec, int test_num){
 	waitpid(pid, 0, 0);
 }
 
-void compare_results(int test_num){
-	//char *buf = (char *) malloc(
-	//FILE *res = fopen(
+int compare_results(int test_num){
+	char *outbuf = (char *) malloc(64);
+	memset(outbuf, 0, 64);
+	sprintf(outbuf, "%s%s%d.out", TEST_RES, TEST_FILE, test_num);
+	char *errbuf = (char *) malloc(64);
+	memset(errbuf, 0, 64);
+	sprintf(errbuf, "%s%s%d.err", TEST_RES, TEST_FILE, test_num);
+	char *bbuf = (char *) malloc(64);
+	memset(bbuf, 0, 64);
+
+	sprintf(bbuf, "%s%s%d", TEST_OUT, TEST_FILE, test_num);
+	FILE *tres = fopen(bbuf, "r");
+	sprintf(bbuf, "%s%s%d.b", TEST_RES, TEST_FILE, test_num);
+	FILE *res = fopen(bbuf, "r");
+	if(!res){
+		print_status(RED_C, 0, stderr);
+		fprintf(stderr, "Unable to open '%s'!\n", bbuf);
+		print_test_failed();
+		return 1;
+	}
+
+	char *tline, *oline;
+	tline = (char *) malloc(64);
+	oline = (char *) malloc(64);
+	int line = 0;
+	int failure = 0;
+	while(fgets(tline, 64, tres)){
+		fgets(oline, 64, res);
+		
+		// make sure the read went smoothly
+		if(feof(res)){
+			print_status(RED_C, 0, stderr);
+			fprintf(stderr, "Compiled file has fewer lines than expected!\n");
+			print_test_failed();
+			return 1;
+		}
+		else if(ferror(res)){
+			print_status(RED_C, 0, stderr);
+			fprintf(stderr, "Compiled file, '%s', had an error during "
+					"reading!\n", bbuf);
+			print_test_failed();
+			return 1;
+		}
+
+		// clean up the lines first
+		trimwhitespace(tline);
+		trimwhitespace(oline);
+		
+		// equate lines
+		if(strcmp(tline, oline)){
+			print_status(RED_C, 0, stderr);
+			fprintf(stderr, "Line %d: expected '%s', but read '%s'!\n", 
+					line, tline, oline);
+			failure = 1;
+		}
+		line++;
+	}
+
+	if(failure)
+		print_test_failed();
+	else
+		print_test_success();
+	return failure;
+}
+
+void print_test_failed(){
+	print_status(RED_C, 0, stderr);
+	fprintf(stderr, "Test Failed!\n");
+}
+
+void print_test_success(){
+	print_status(GRN_C, 0, stdout);
+	fprintf(stdout, "Test Successful!\n");
 }
 
