@@ -21,7 +21,8 @@ short check_files(int test_num);
 void print_status(const char *color, const char *indent, FILE *out);
 void cleanup_older();
 short check_executable();
-void run_test(int test_num);
+void run_test(char *exec, int test_num);
+void compare_results(int test_num);
 
 #endif
 
