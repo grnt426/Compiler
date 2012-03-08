@@ -41,14 +41,21 @@ int main(int argc, char **argv){
 	int total_failed = 0;
 	while(test_num < TEST_CNT){
 		test_num++;
-		printf("\t--- Test Input #%d ---\n", test_num);
+		printf("\n\t--- Test Input #%d ---\n", test_num);
 		if(check_files(test_num))
 			continue;
 		run_test(TRANS_EXEC, test_num);
 		total_failed += compare_results(test_num);
 	}
 
-	printf("");
+	printf("\n\t\t===== Summary =====\n");
+	if(total_failed >= TEST_CNT *.5)
+		print_status(RED_C, 0, stdout);
+	else if(total_failed)
+		print_status(YLW_C, 0, stdout);
+	else
+		print_status(GRN_C, 0, stdout);
+	printf("%d of %d tests failed.\n", total_failed, TEST_CNT);
 
 	print_status(WHT_C, 0, stdout);
 	printf("Test Complete.\n");
@@ -117,7 +124,6 @@ void run_test(char *exec, int test_num){
 			prog[3] = '\0'; // last argument must be nul
 			
 			// actually print
-			fprintf(stderr, "PROG: %s %s %s\n", prog[0], prog[1], prog[2]);
 			execvp(prog[0], prog);
 			print_status(RED_C, 0, stderr);
 			fprintf(stderr, "Unable to execute '%s'!\n", 
