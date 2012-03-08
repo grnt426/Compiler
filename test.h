@@ -6,6 +6,7 @@
 #define TEST_OUT	"test_output/"
 #define TEST_SOUT	"test_stdout/"
 #define TEST_SERR	"test_stderr/"
+#define TEST_RES	"test_results/"
 
 // The file name for all tests
 #define TEST_FILE	"test."
@@ -20,7 +21,7 @@ short check_files(int test_num);
 void print_status(const char *color, const char *indent, FILE *out);
 void cleanup_older();
 short check_executable();
-
+void run_test(int test_num);
 
 #endif
 
