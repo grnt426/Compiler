@@ -38,14 +38,17 @@ int main(int argc, char **argv){
 
 	// Run all available tests
 	int test_num = 0;
+	int total_failed = 0;
 	while(test_num < TEST_CNT){
 		test_num++;
 		printf("\t--- Test Input #%d ---\n", test_num);
 		if(check_files(test_num))
 			continue;
 		run_test(TRANS_EXEC, test_num);
-		compare_results(test_num);
+		total_failed += compare_results(test_num);
 	}
+
+	printf("");
 
 	print_status(WHT_C, 0, stdout);
 	printf("Test Complete.\n");
@@ -157,14 +160,14 @@ int compare_results(int test_num){
 		
 		// make sure the read went smoothly
 		if(feof(res)){
-			print_status(RED_C, 0, stderr);
-			fprintf(stderr, "Compiled file has fewer lines than expected!\n");
+			print_status(RED_C, 0, stdout);
+			printf("Compiled file has fewer lines than expected!\n");
 			print_test_failed();
 			return 1;
 		}
 		else if(ferror(res)){
-			print_status(RED_C, 0, stderr);
-			fprintf(stderr, "Compiled file, '%s', had an error during "
+			print_status(RED_C, 0, stdout);
+			printf("Compiled file, '%s', had an error during "
 					"reading!\n", bbuf);
 			print_test_failed();
 			return 1;
@@ -176,8 +179,8 @@ int compare_results(int test_num){
 		
 		// equate lines
 		if(strcmp(tline, oline)){
-			print_status(RED_C, 0, stderr);
-			fprintf(stderr, "Line %d: expected '%s', but read '%s'!\n", 
+			print_status(RED_C, 0, stdout);
+			printf("Line %d: expected '%s', but read '%s'!\n", 
 					line, tline, oline);
 			failure = 1;
 		}
@@ -192,8 +195,8 @@ int compare_results(int test_num){
 }
 
 void print_test_failed(){
-	print_status(RED_C, 0, stderr);
-	fprintf(stderr, "Test Failed!\n");
+	print_status(RED_C, 0, stdout);
+	printf("Test Failed!\n");
 }
 
 void print_test_success(){
