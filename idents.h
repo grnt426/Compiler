@@ -28,7 +28,7 @@ int process_literal(char *tok, int max_val);
 
 // Comment Processing Functions
 short check_comment(char * tok, struct program *prog);
-void process_comment();
+void process_comment(struct program *prog);
 
 // Error Reporting
 void print_compiler_error(struct program *prog, const char *color);

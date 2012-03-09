@@ -184,7 +184,7 @@ void process_input_program(struct program *program){
 	}while(!check_EOF(program->in) && !program->error_code);
 
 	if(program->error_code)
-	return;
+		return;
 
 	// resolve constants/labels
 	translate_terms(program->terms, program);
@@ -220,18 +220,17 @@ void process_input_program(struct program *program){
 */
 void process_token(char *tok, struct program *program){
 
+	// check for comments
+	if(check_comment(tok, program)){
+		process_comment(program);
+		return;
+	}
+
 	// check if we have a label
-	if(check_label_def(tok, program)){
+	else if(check_label_def(tok, program)){
 		process_label_def(tok, program);
 		return;
 	}
-
-	// check for comments
-	else if(check_comment(tok, program)){
-		process_comment(tok, program);
-		return;
-	}
-
 	// process constant definitions
 	else if(check_const_def(tok, program)){
 		process_const_def(tok, program);
@@ -279,7 +278,7 @@ void process_token(char *tok, struct program *program){
 		process_instruction(program, JMP, JMP_F, 0);
 	}
 	else if(!strcmp(tok, "NOP")){
-		process_instruction(program, NOP, JMP_F, 0);
+		process_instruction(program, NOP, NOP_F, 0);
 	}
 
 	// looks like a bad opcode
@@ -332,6 +331,7 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 		prog->error_code = -1;
 		return;
 	}
+	t->trans = 1;
 	struct Term *child;
 	prog->term_count++;
 	t->pos = prog->term_count;
@@ -373,10 +373,6 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 		}
 		else if(fmt[c] == ']'){
 			or = 0;
-			reg = -1;
-			iden = 0;
-			label = 0;
-			tok = 0;
 
 			// if all options failed, report parse error
 			if(!reg && !iden && !label){
@@ -387,6 +383,12 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 				prog->error_code = GARBAGE;
 				return;
 			}
+
+			// reset everything
+			reg = -1;
+			iden = 0;
+			label = 0;
+			tok = 0;
 		}
 		else if(fmt[c] == 's'){
 			reg = read_src_reg(prog, or);
@@ -439,11 +441,16 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 
 		if(reg != -1){
 			child = create_single_char_term(dtoc(reg-1), 0);
+			child->trans = 1;
 			add_child_term(child, t, prog);
+			if(!or)
+				reg = -1;
 		}
 		else if(iden){
 			child = create_term(iden, strlen(iden), 0);
 			add_child_term(child, t, prog);
+			if(!or)
+				reg = -1;
 		}
 		c++;
 	}
@@ -451,6 +458,7 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 	// Finally, add miscellaneous bits to the end
 	if(misc){
 		struct Term *mt = create_term(misc, strlen(misc), 0);
+		mt->trans = 1;
 		add_child_term(mt, t, prog);
 	}
 }
@@ -628,16 +636,12 @@ void translate_terms(struct Term * t, struct program *prog){
 
 	// consume all terms
 	while(t){
+		
+		if(!t->trans){
 
-		// example code for dealing with JMP instructions
-		if(strcmp(t->term, JMP) == 0){
-
-			// extract the multiplier
-
-			// the next term specifies an r-pointer
-			t = t->next_term;
+			// check for symbols that still need to be translated
 			if( check_explicit_literal(t->term, prog) ){
-			t->term = numtob(stonum(t->term+1), WORD_SIZE);
+				t->term = numtob(stonum(t->term+1), WORD_SIZE);
 			}
 			else{
 
@@ -706,6 +710,12 @@ void write_terms(struct Term *t, struct program *program){
 	}
 }
 
+/**
+ * Checks for unused symbols in the constant table and in the identifiers
+ * table.
+ * @param	prog		Contains all the relevant symbol tables to check for
+ * 						unused symbols.
+ */
 void check_warnings(struct program *prog){
 
 	// check which symbols are not used, generate warnings

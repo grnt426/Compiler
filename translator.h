@@ -2,7 +2,7 @@
 #define translator_h_
 
 // debug print control
-#define DEBUG_ // general purpose debug messages
+#define DEBUG // general purpose debug messages
 
 // Machine Constraints
 #define MAX_REGS 2
@@ -14,23 +14,23 @@
 #define WORD_SIZE 7
 
 // (Real) Instructions
-// Name Code Ext. Code Description
-#define NOT "0000" // bitwise not of $source into $dest
-#define SHL "0001" // a left bitwise shift, once
-#define SHR "0010" // a right bitwise shift, once
-#define OR "0011" // bitwise or of $s1 and $s2 into $dest
-#define AND "0100" // bitwise and of $s1 and $s1 into $dest
-#define ADD "0101" // binary addition of $s1 and $s2 into $dest
-#define SW "0110" // store word to cache
-#define LW "0111" // load word from cache into $dest
-#define BEZ "1000" // branch if $source equal to zero
-#define ROT1 "1001000" // increase cache index by one
-#define ROT "10010" // increase cache index by $source
-#define LROT "10011"
-#define LJMP "1010" // apply scalar to next jump
-#define JMP "1011" // next value is a pointer
-#define HALT "1111000" // stops all processing
-#define NOP "1111100" // consumes a cycle
+// 		Name 	Code 		Description
+#define NOT 	"0000" 		// bitwise not of $source into $dest
+#define SHL 	"0001" 		// a left bitwise shift, once
+#define SHR 	"0010" 		// a right bitwise shift, once
+#define OR 		"0011" 		// bitwise or of $s1 and $s2 into $dest
+#define AND 	"0100" 		// bitwise and of $s1 and $s1 into $dest
+#define ADD 	"0101" 		// binary addition of $s1 and $s2 into $dest
+#define SW 		"0110" 		// store word to cache
+#define LW 		"0111" 		// load word from cache into $dest
+#define BEZ 	"1000" 		// branch if $source equal to zero
+#define ROT1 	"1001000" 	// increase cache index by one
+#define ROT 	"10010" 	// increase cache index by $source
+#define LROT 	"10011"
+#define LJMP 	"1010" 		// apply scalar to next jump
+#define JMP 	"1011" 		// next value is a pointer
+#define HALT 	"1111000" 	// stops all processing
+#define NOP 	"1111100" 	// consumes a cycle
 
 // Instruction Format Codes
 #define NOT_F "sd"
@@ -41,7 +41,7 @@
 #define ADD_F "ssd"
 #define SW_F "s"
 #define LW_F "d"
-#define BEZ_F "sl"
+#define BEZ_F "s[lcn]"
 #define ROT_F "s"
 #define ROT1_F ""
 #define JMP_F "[lcn]"
