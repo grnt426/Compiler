@@ -278,7 +278,7 @@ void process_token(char *tok, struct program *program){
 		process_instruction(program, JMP, JMP_F, 0);
 	}
 	else if(!strcmp(tok, "NOP")){
-		process_instruction(program, NOP, JMP_F, 0);
+		process_instruction(program, NOP, NOP_F, 0);
 	}
 
 	// looks like a bad opcode
