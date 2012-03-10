@@ -31,22 +31,26 @@
 #define JMP 	"1011" 		// next value is a pointer
 #define HALT 	"1111000" 	// stops all processing
 #define NOP 	"1111100" 	// consumes a cycle
+#define LFSJ	"1111010"	// load from DR, subtract, & jump
+#define STJ		"1111110"	// store to DR & jump
 
 // Instruction Format Codes
-#define NOT_F "sd"
-#define SHL_F "sd"
-#define SHR_F "sd"
-#define OR_F "ssd"
-#define AND_F "ssd"
-#define ADD_F "ssd"
-#define SW_F "s"
-#define LW_F "d"
-#define BEZ_F "s[lcn]"
-#define ROT_F "s"
-#define ROT1_F ""
-#define JMP_F "[lcn]"
-#define NOP_F ""
-#define HALT_F ""
+#define NOT_F 	"sd"
+#define SHL_F 	"sd"
+#define SHR_F 	"sd"
+#define OR_F 	"ssd"
+#define AND_F 	"ssd"
+#define ADD_F 	"ssd"
+#define SW_F 	"s"
+#define LW_F 	"d"
+#define BEZ_F 	"s[lcn]"
+#define ROT_F 	"s"
+#define ROT1_F 	""
+#define JMP_F 	"[lcn]"
+#define NOP_F 	""
+#define HALT_F 	""
+#define LFSJ_F	"t"
+#define	STJ_F	"tl"
 
 // Flags
 #define WARN_FLAG "-w"
