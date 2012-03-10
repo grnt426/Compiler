@@ -79,6 +79,17 @@ Instruction Set:
 	- NOP 	<11111>
 		- No Operation
 		- does nothing
+	- LFSJ	<111101>
+		- Load From, Substract, and Jump
+		- Loads the current value pointed at on the data ring, 
+			subtracts from next value on text ring, stores to jump register,
+			and jumps.
+		- Used to return from a function call.
+	- STJ	<1111110>
+		- Store To, and Jump
+		- Stores to the data ring the next value on the text ring, then stores
+			value after that in the jump register and jumps.
+		- Used to make a function call.
 
 Program Execution:
 	- Load instruction from text ring
