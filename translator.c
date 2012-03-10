@@ -698,7 +698,7 @@ void translate_terms(struct Term * t, struct program *prog){
 					print_non_func_call(s, prog, t->absolute_pos);
 					return;
 				}
-				diff = s->pos - t->pos;
+				diff = s->pos - t->pos - 2;
 				if(diff < 0)
 					diff = MAX_MEMORY + diff;
 
@@ -729,9 +729,11 @@ void translate_terms(struct Term * t, struct program *prog){
 				#ifdef DEBUG
 					fprintf(stderr, "Processing return...\n");
 				#endif
-				diff = t->pos - cur_func->pos;
 				t = t->next_term;
-				t->term = numtob(diff, WORD_SIZE);
+				diff = cur_func->pos - t->pos;
+				// We need to add one since we will be on the r-pointer itself
+				// and not on the instruction saying to return
+				t->term = numtob(diff + 2, WORD_SIZE);
 				t->trans = 1;
 				term_pos++;
 
