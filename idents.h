@@ -6,9 +6,18 @@
 #define LABEL_SYM		':'
 #define CONSTANT_SYM	'#'
 #define LITERAL_SYM		'!'
+#define FUNC_DEF		'.'
 
 // Soft Contraints
 #define MAX_LINE_LEN	32
+
+// Error Reporting
+#define	DOUBLE_DEF		30
+#define	NO_DEF_VAL		31
+#define	EMPTY_DEF		32
+#define FUNC_DOUBLE		33
+#define	CALL_NON_F		34
+#define RET_NON_F		35
 
 struct program;
 
@@ -37,6 +46,10 @@ void print_asterisk(const char *color, FILE *out);
 // Identifier Error Reporting
 void print_unexpected_ident(char *ident, struct program *prog);
 void print_expected_ident(char *ident, char *expected, struct program * prog);
+
+// Function Definition Processing
+short check_func_def(char *tok, struct program *prog);
+void process_func_def(char *tok, struct program *prog);
 
 // Miscellaneous
 void blind_consume();
