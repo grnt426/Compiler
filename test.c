@@ -234,7 +234,7 @@ int compare_results(int test_num){
 		// equate lines
 		if(strcmp(tline, oline)){
 			print_status(RED_C, 0, stdout);
-			printf("Line %d: expected '%s', but read '%s'!\n", 
+			printf("Line %d:\texpected '%s', but read '%s'!\n", 
 					line, tline, oline);
 			failure = 1;
 		}
