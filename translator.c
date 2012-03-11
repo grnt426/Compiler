@@ -187,6 +187,10 @@ void process_input_program(struct program *program){
 		return;
 
 	// resolve constants/labels
+	#ifdef DEBUG
+		fprintf(stderr, "LAST TERM: '%s' TRANS: %d\n", 
+				program->end_term->term, program->end_term->trans);
+	#endif
 	translate_terms(program->terms, program);
 
 	// write terms to out file
@@ -226,14 +230,21 @@ void process_token(char *tok, struct program *program){
 		return;
 	}
 
-	// check if we have a label
-	else if(check_label_def(tok, program)){
-		process_label_def(tok, program);
-		return;
-	}
 	// process constant definitions
 	else if(check_const_def(tok, program)){
 		process_const_def(tok, program);
+		return;
+	}
+
+	// Function definitions
+	else if(check_func_def(tok, program)){
+		process_func_def(tok, program);
+		return;
+	}
+	
+	// check if we have a label
+	else if(check_label_def(tok, program)){
+		process_label_def(tok, program);
 		return;
 	}
 
@@ -265,6 +276,9 @@ void process_token(char *tok, struct program *program){
 	else if(!strcmp(tok, "LW")){
 		process_instruction(program, LW, LW_F, 0);
 	}
+	else if(!strcmp(tok, "LI")){
+		process_instruction(program, LI, LI_F, 0);
+	}
 	else if(!strcmp(tok, "BEZ")){
 		process_instruction(program, BEZ, BEZ_F, 0);
 	}
@@ -279,6 +293,12 @@ void process_token(char *tok, struct program *program){
 	}
 	else if(!strcmp(tok, "NOP")){
 		process_instruction(program, NOP, NOP_F, 0);
+	}
+	else if(!strcmp(tok, "LFSJ")){
+		process_instruction(program, LFSJ, LFSJ_F, 0);
+	}
+	else if(!strcmp(tok, "STJ")){
+		process_instruction(program, STJ, STJ_F, 0);
 	}
 
 	// looks like a bad opcode
@@ -301,6 +321,7 @@ void process_token(char *tok, struct program *program){
 * 	l -> Label
 * 	c -> Constant
 * 	n -> Literal number
+* 	t -> Place an empty term after this term
 * 	[ -> Start 'or' expression (non-recursive)
 * 	] -> End 'or' expression
 *
@@ -336,6 +357,10 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 	prog->term_count++;
 	t->pos = prog->term_count;
 
+	#ifdef DEBUG
+		fprintf(stderr, "OPCODE: '%s'\n", opcode);
+	#endif
+
 	// add term to our program
 	if(prog->terms){
 		prog->end_term->next_term = t;
@@ -357,25 +382,28 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 	// opcode argument parsing
 	short reg = -1;
 	char *iden = 0;
-	char *label = 0;
 	char *tok = 0;
-	int c = 0, or = 0;
+	int c = 0, or = 0, val = -1;
 	while(fmt[c]){
-		if(or && ( (reg != -1) | (iden ? 1 : 0) | (label ? 1 : 0) )
-				&& fmt[c] != ']'){
-			#ifdef DEBUG
-				fprintf(stderr, "DOING NOTHING!\n%d\n%p\n%p\n", reg, iden,
-						label);
-			#endif
+		if(fmt[c] == 't'){
+			prog->end_term->next_term = create_term(0, 0, 0);
+			prog->end_term = prog->end_term->next_term;
+			prog->term_count++;
+			prog->end_term->pos = prog->term_count;
+			prog->end_term->absolute_pos = prog->line_count;
+		}
+		else if(or && ( (reg != -1) | (iden ? 1 : 0) | (val != -1) ) 
+				&&fmt[c] != ']'){
+			// do nothing...
 		}
 		else if(fmt[c] == '['){
-		or = 1;
+			or = 1;
 		}
 		else if(fmt[c] == ']'){
 			or = 0;
 
 			// if all options failed, report parse error
-			if(!reg && !iden && !label){
+			if(!reg && !iden && !val){
 				// TODO: create standardized error reporting....
 				print_compiler_error(prog, RED_C);
 				print_asterisk(RED_C, stderr);
@@ -387,7 +415,6 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 			// reset everything
 			reg = -1;
 			iden = 0;
-			label = 0;
 			tok = 0;
 		}
 		else if(fmt[c] == 's'){
@@ -405,19 +432,22 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 		else if(fmt[c] == 'l'){
 			if(!tok && or){
 				tok = strtok(0, ", \t");
-				label = tok;
+				iden = tok;
 			}
 			else if(!or){
-				label = strtok(0, ", \t");
+				iden = strtok(0, ", \t");
 			}
 			else{
-				label = tok;
+				iden = tok;
 			}
-			struct Term *nt = create_term(label, strlen(label), 0);
+			
+			// create the term and add to the end
+			struct Term *nt = create_term(iden, strlen(iden), 0);
 			prog->term_count++;
 			nt->pos = prog->term_count;
 			prog->end_term->next_term = nt;
 			prog->end_term = nt;
+			nt->absolute_pos = prog->line_count;
 			#ifdef DEBUG
 			fprintf(stderr, "GOTS A LABEL!\n");
 			#endif
@@ -433,21 +463,81 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 			else{
 				iden = tok;
 			}
+			if(!check_explicit_literal(iden, prog)){
+				if(!or){
+					print_expected_literal(iden, prog);
+					return;
+				}
+				iden = 0;
+			}
+			else{
+				val = process_literal(iden, MAX_INT);
+				iden = 0;
+				if(val < 0){
+					print_literal_too_large(iden, prog);
+					return;
+				}
+				else{
+
+					#ifdef DEBUG
+						fprintf(stderr, "GOTS A LITERAL!\n");
+					#endif
+
+					// create the term and add to the end
+					struct Term *nt = create_term(numtob(val, WORD_SIZE), 
+							strlen(iden), 0);
+					nt->trans = 1;
+					prog->term_count++;
+					nt->pos = prog->term_count;
+					prog->end_term->next_term = nt;
+					prog->end_term = nt;
+					nt->absolute_pos = prog->line_count;
+				}
+			}
+		}
+		else if(fmt[c] == 'c'){
+			if(!tok && or){
+				tok = strtok(0, ", \t");
+				iden = tok;
+			}
+			else if(!or){
+				iden = strtok(0, ", \t");
+			}
+			else{
+				iden = tok;
+			}
+
+			if(!check_const(iden, prog)){
+				if(!or){
+					print_expected_const(iden, prog);
+					return;
+				}
+				iden = 0;
+			}
+			else{
+
+				#ifdef DEBUG
+					fprintf(stderr, "GOTS A CONSTANT!\n");
+				#endif
+
+				// create the term and add to the end
+				struct Term *nt = create_term(iden, strlen(iden), 0);
+				prog->term_count++;
+				nt->pos = prog->term_count;
+				prog->end_term->next_term = nt;
+				prog->end_term = nt;
+				nt->absolute_pos = prog->line_count;
+			}
 		}
 		else{
 			fprintf(stderr, " * Error In Compiler!!!\n\tStrange format code: "
-			"'%c'.\n", fmt[c]);
+					"'%c'.\n", fmt[c]);
 		}
 
 		if(reg != -1){
 			child = create_single_char_term(dtoc(reg-1), 0);
+			child->absolute_pos = prog->line_count;
 			child->trans = 1;
-			add_child_term(child, t, prog);
-			if(!or)
-				reg = -1;
-		}
-		else if(iden){
-			child = create_term(iden, strlen(iden), 0);
 			add_child_term(child, t, prog);
 			if(!or)
 				reg = -1;
@@ -459,6 +549,7 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 	if(misc){
 		struct Term *mt = create_term(misc, strlen(misc), 0);
 		mt->trans = 1;
+		mt->absolute_pos = prog->line_count;
 		add_child_term(mt, t, prog);
 	}
 }
@@ -631,13 +722,87 @@ char *conv_reg_to_str(char *buf, short reg){
 void translate_terms(struct Term * t, struct program *prog){
 
 	// vars
-	struct symbol *s;
-	int diff;
+	struct symbol *s = 0;
+	struct symbol *cur_func = 0;
+	int diff, term_pos = 1;
+
+	#ifdef DEBUG
+		fprintf(stderr, "LAST TERM: %s TRANS: %d\n", prog->end_term->term,
+				prog->end_term->trans);
+	#endif
 
 	// consume all terms
 	while(t){
+
+		#ifdef DEBUG
+			fprintf(stderr, "CUR TERM: %s, TRANS: %d\n", t->term, t->trans);
+		#endif
 		
-		if(!t->trans){
+		// check if we are under a new function
+		if( (s = find_symbol_at(term_pos, prog->tbl)) ){
+			cur_func = s;
+			s = 0;
+		}
+
+		// We need to process CALL instructions a little differently
+		if(!strcmp(t->term, STJ)){
+			
+			// The next two terms need to be translated differently
+			struct Term *jmp_back = t->next_term;
+			struct Term *jmp_to = jmp_back->next_term;
+			term_pos += 2;
+			if( (s = find_symbol(jmp_to->term, prog->tbl)) ){
+				if(s->type != FUNC_TYPE){
+					print_non_func_call(s, prog, t->absolute_pos);
+					return;
+				}
+				diff = s->pos - t->pos - 2;
+				if(diff < 0)
+					diff = MAX_MEMORY + diff;
+
+				// Assume we are returning from the definition of the function,
+				// the LFSJ instruction will apply the necessary offset to
+				// this value.  We need to add one to get around the jump
+				// r-pointer upon returning.
+				jmp_back->term = numtob( (MAX_MEMORY - diff + 1), WORD_SIZE);
+				jmp_back->trans = 1;
+
+				// Just jump to the function definition
+				jmp_to->term = numtob(diff, WORD_SIZE);
+				jmp_to->trans = 1;
+			}
+		}
+		else if(!strcmp(t->term, LFSJ)){
+			
+			// make sure we are currently under a function
+			if(!cur_func){
+				print_return_from_non_func(t->absolute_pos, prog);
+				return;
+			}
+			else{
+				
+
+				// compute difference to start of function, set as diff
+				// for text value
+				#ifdef DEBUG
+					fprintf(stderr, "Processing return...\n");
+				#endif
+				t = t->next_term;
+				diff = cur_func->pos - t->pos;
+				// We need to add one since we will be on the r-pointer itself
+				// and not on the instruction saying to return
+				t->term = numtob(diff + 2, WORD_SIZE);
+				t->trans = 1;
+				term_pos++;
+
+
+			}
+		}
+		else if(!t->trans){
+			
+			#ifdef DEBUG
+				fprintf(stderr, "%s %d\n", t->term, t->trans);
+			#endif
 
 			// check for symbols that still need to be translated
 			if( check_explicit_literal(t->term, prog) ){
@@ -668,10 +833,12 @@ void translate_terms(struct Term * t, struct program *prog){
 				else{
 					// TODO: use the standard print_compiler_error message
 					print_symbol_not_found(t->term, prog);
+					return;
 				}
 			}
 		}
 		t = t->next_term;
+		term_pos++;
 	}
 
 }
