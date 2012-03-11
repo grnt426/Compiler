@@ -47,9 +47,12 @@ Instruction Set:
 	- SW 	<0110>
 		- Store word to data ring
 		- sw $source
-	- LW 	<0111>
+	- LW 	<01110>
 		- Load word from data ring
 		- lw $dest
+	- LI	<01111>
+		- Load Immediate into destination register
+		- li $dest
 	- BEZ 	<1000>
 		- Branch if equal to zero
 		- beq $source
