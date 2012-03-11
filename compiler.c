@@ -71,7 +71,7 @@ int checkOpenFile(const char *filename){
 int parseFile(struct program *prog){
 
 	// vars
-	short chars_read;
+	//short chars_read;
 	char *tok;
 
 	do{
@@ -96,7 +96,7 @@ int parseFile(struct program *prog){
 void process_token(char *tok, struct program *prog){
 	
 	if(check_comment(tok, prog)){
-		process_comment(tok);
+		process_comment(prog);
 	}
 	else{
 		
@@ -145,12 +145,12 @@ void ifStatement(struct Term *term, FILE *input, ProgramData *prog){
 	char value;
 	const unsigned int buf_size = 64;
 	char misc_buf[buf_size];
-	struct Term * new_term;
+	//struct Term * new_term;
 	
 	// The 'IF_IDEN' terminal has already been consumed, process all else
 	value = readNonEmptyChar(input, prog);
 	if(value == PAREN_S){
-		addChildTerm(createSingleCharTerm(PAREN_S), term);
+		//addChildTerm(create_single_char_term(PAREN_S), term);
 	}
 	else{
 		// produce error
@@ -162,7 +162,7 @@ void ifStatement(struct Term *term, FILE *input, ProgramData *prog){
 	}
 	
 	// produce a Term for the expression, then attempt to parse it
-	addChildTerm(createTerm(misc_buf, buf_size), term);
+	//addChildTerm(createTerm(misc_buf, buf_size), term);
 	
 	// parse statement within the if-statement
 	// STUB
@@ -172,12 +172,12 @@ void ifStatement(struct Term *term, FILE *input, ProgramData *prog){
 		return; // someone beneath us failed
 	
 	// add the closing parenthesis
-	addChildTerm(createSingleCharTerm(PAREN_S), term);
+	//addChildTerm(createSingleCharTerm(PAREN_S), term);
 	
 	// next, consume the 'BRACE_S' identifier
 	value = readNonEmptyChar(input, prog);
 	if(value == PAREN_S){
-		addChildTerm(createSingleCharTerm(BRACE_S), term);
+		//addChildTerm(createSingleCharTerm(BRACE_S), term);
 	}
 	else{
 		// produce error

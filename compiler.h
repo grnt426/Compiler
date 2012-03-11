@@ -8,7 +8,7 @@
 
 // Language Identifiers
 #define LINE_TERM 	';'
-#define IF_IDEN		'if'
+#define IF_IDEN		"if"
 #define PAREN_S		'('
 #define PAREN_E		')'
 #define EQUALS		'='
@@ -16,7 +16,7 @@
 #define BRACE_E		'}'
 #define PLUS		'+'
 #define SUB			'-'
-#define HALT		'HALT'
+#define HALT		"HALT"
 #define NEWLINE		'\n'
 #define TAB			'\t'
 #define SPACE		' '
