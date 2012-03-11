@@ -44,9 +44,12 @@ Instruction Set:
 	- ADD 	<0101>
 		- Add
 		- add $source, $source2, $dest
-	- SW 	<0110>
+	- SW 	<01100>
 		- Store word to data ring
 		- sw $source
+	- SI	<01101>
+		- Store immediate onto data ring
+		- si literal/constant
 	- LW 	<01110>
 		- Load word from data ring
 		- lw $dest

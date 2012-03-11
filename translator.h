@@ -22,7 +22,8 @@
 #define OR 		"0011" 		// bitwise or of $s1 and $s2 into $dest
 #define AND 	"0100" 		// bitwise and of $s1 and $s1 into $dest
 #define ADD 	"0101" 		// binary addition of $s1 and $s2 into $dest
-#define SW 		"0110" 		// store word to cache
+#define SW 		"01100"		// store word to cache
+#define SI		"01101"		// stores next value on text into data
 #define LW 		"01110" 	// load word from cache into $dest
 #define LI		"01111"		// Loads the next value on the text ring
 #define BEZ 	"1000" 		// branch if $source equal to zero
@@ -44,6 +45,7 @@
 #define AND_F 	"ssd"
 #define ADD_F 	"ssd"
 #define SW_F 	"s"
+#define SI_F	"[cn]"
 #define LW_F 	"d"
 #define LI_F	"[cn]"
 #define BEZ_F 	"s[lcn]"

@@ -273,6 +273,9 @@ void process_token(char *tok, struct program *program){
 	else if(!strcmp(tok, "SW")){
 		process_instruction(program, SW, SW_F, 0);
 	}
+	else if(!strcmp(tok, "SI")){
+		process_instruction(program, SI, SI_F, 0);
+	}
 	else if(!strcmp(tok, "LW")){
 		process_instruction(program, LW, LW_F, 0);
 	}
