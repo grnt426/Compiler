@@ -67,12 +67,9 @@ Instruction Set:
 			- rotates by the specified value in the register
 		- rot (bit 6 = 0)
 			- implicitly rotates once
-	- LROT	<10011(0/1)>
+	- LROT	<10011>
 		- Rotates Data Ring by amount in next value on text ring
-		- lrot $multiplier_reg (bit 7 is register, bit 6 = 1)
-			- applies multiplier, then loads and performs rotate
-		- lrot (bit 7 ignored, bit 6 = 0)
-			- apply no multiplier
+		- lrot literal/constant
 	- LJMP 	<1010>
 		- Specifies that the next instruction is to be made a longer jump
 		- ljmp !multiplier

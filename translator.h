@@ -27,9 +27,9 @@
 #define LW 		"01110" 	// load word from cache into $dest
 #define LI		"01111"		// Loads the next value on the text ring
 #define BEZ 	"1000" 		// branch if $source equal to zero
-#define ROT1 	"1001000" 	// increase cache index by one
 #define ROT 	"10010" 	// increase cache index by $source
-#define LROT 	"10011"
+#define ROT1 	"1001100" 	// increase cache index by one
+#define LROT 	"1001010"	// move cache index by value on text ring
 #define LJMP 	"1010" 		// apply scalar to next jump
 #define JMP 	"1011" 		// next value is a pointer
 #define HALT 	"1111000" 	// stops all processing
@@ -51,6 +51,7 @@
 #define BEZ_F 	"s[lcn]"
 #define ROT_F 	"s"
 #define ROT1_F 	""
+#define LROT_F	"[cn]"
 #define JMP_F 	"[lcn]"
 #define NOP_F 	""
 #define HALT_F 	""
