@@ -276,6 +276,9 @@ void process_token(char *tok, struct program *program){
 	else if(!strcmp(tok, "LW")){
 		process_instruction(program, LW, LW_F, 0);
 	}
+	else if(!strcmp(tok, "LI")){
+		process_instruction(program, LI, LI_F, 0);
+	}
 	else if(!strcmp(tok, "BEZ")){
 		process_instruction(program, BEZ, BEZ_F, 0);
 	}
@@ -379,9 +382,8 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 	// opcode argument parsing
 	short reg = -1;
 	char *iden = 0;
-	char *label = 0;
 	char *tok = 0;
-	int c = 0, or = 0;
+	int c = 0, or = 0, val = -1;
 	while(fmt[c]){
 		if(fmt[c] == 't'){
 			prog->end_term->next_term = create_term(0, 0, 0);
@@ -390,12 +392,9 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 			prog->end_term->pos = prog->term_count;
 			prog->end_term->absolute_pos = prog->line_count;
 		}
-		else if(or && ( (reg != -1) | (iden ? 1 : 0) | (label ? 1 : 0) )
-				&& fmt[c] != ']'){
-			#ifdef DEBUG
-				fprintf(stderr, "DOING NOTHING!\n%d\n%p\n%p\n", reg, iden,
-						label);
-			#endif
+		else if(or && ( (reg != -1) | (iden ? 1 : 0) | (val != -1) ) 
+				&&fmt[c] != ']'){
+			// do nothing...
 		}
 		else if(fmt[c] == '['){
 			or = 1;
@@ -404,7 +403,7 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 			or = 0;
 
 			// if all options failed, report parse error
-			if(!reg && !iden && !label){
+			if(!reg && !iden && !val){
 				// TODO: create standardized error reporting....
 				print_compiler_error(prog, RED_C);
 				print_asterisk(RED_C, stderr);
@@ -416,7 +415,6 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 			// reset everything
 			reg = -1;
 			iden = 0;
-			label = 0;
 			tok = 0;
 		}
 		else if(fmt[c] == 's'){
@@ -434,15 +432,17 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 		else if(fmt[c] == 'l'){
 			if(!tok && or){
 				tok = strtok(0, ", \t");
-				label = tok;
+				iden = tok;
 			}
 			else if(!or){
-				label = strtok(0, ", \t");
+				iden = strtok(0, ", \t");
 			}
 			else{
-				label = tok;
+				iden = tok;
 			}
-			struct Term *nt = create_term(label, strlen(label), 0);
+			
+			// create the term and add to the end
+			struct Term *nt = create_term(iden, strlen(iden), 0);
 			prog->term_count++;
 			nt->pos = prog->term_count;
 			prog->end_term->next_term = nt;
@@ -463,6 +463,71 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 			else{
 				iden = tok;
 			}
+			if(!check_explicit_literal(iden, prog)){
+				if(!or){
+					print_expected_literal(iden, prog);
+					return;
+				}
+				iden = 0;
+			}
+			else{
+				val = process_literal(iden, MAX_INT);
+				iden = 0;
+				if(val < 0){
+					print_literal_too_large(iden, prog);
+					return;
+				}
+				else{
+
+					#ifdef DEBUG
+						fprintf(stderr, "GOTS A LITERAL!\n");
+					#endif
+
+					// create the term and add to the end
+					struct Term *nt = create_term(numtob(val, WORD_SIZE), 
+							strlen(iden), 0);
+					nt->trans = 1;
+					prog->term_count++;
+					nt->pos = prog->term_count;
+					prog->end_term->next_term = nt;
+					prog->end_term = nt;
+					nt->absolute_pos = prog->line_count;
+				}
+			}
+		}
+		else if(fmt[c] == 'c'){
+			if(!tok && or){
+				tok = strtok(0, ", \t");
+				iden = tok;
+			}
+			else if(!or){
+				iden = strtok(0, ", \t");
+			}
+			else{
+				iden = tok;
+			}
+
+			if(!check_const(iden, prog)){
+				if(!or){
+					print_expected_const(iden, prog);
+					return;
+				}
+				iden = 0;
+			}
+			else{
+
+				#ifdef DEBUG
+					fprintf(stderr, "GOTS A CONSTANT!\n");
+				#endif
+
+				// create the term and add to the end
+				struct Term *nt = create_term(iden, strlen(iden), 0);
+				prog->term_count++;
+				nt->pos = prog->term_count;
+				prog->end_term->next_term = nt;
+				prog->end_term = nt;
+				nt->absolute_pos = prog->line_count;
+			}
 		}
 		else{
 			fprintf(stderr, " * Error In Compiler!!!\n\tStrange format code: "
@@ -473,13 +538,6 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 			child = create_single_char_term(dtoc(reg-1), 0);
 			child->absolute_pos = prog->line_count;
 			child->trans = 1;
-			add_child_term(child, t, prog);
-			if(!or)
-				reg = -1;
-		}
-		else if(iden){
-			child = create_term(iden, strlen(iden), 0);
-			child->absolute_pos = prog->line_count;
 			add_child_term(child, t, prog);
 			if(!or)
 				reg = -1;
