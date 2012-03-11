@@ -224,7 +224,7 @@ void process_func_def(char *tok, struct program *prog){
 		if(find_symbol(iden, prog->tbl)){
 			print_compiler_error(prog, RED_C);
 			print_asterisk(RED_C, stderr);
-			fprintf(stderr, "Function already defined!\n");
+			fprintf(stderr, "\tFunction already defined!\n");
 			prog->error_code = DOUBLE_DEF;
 		}
 		else{
@@ -233,6 +233,25 @@ void process_func_def(char *tok, struct program *prog){
 	}
 }
 
+void print_literal_too_large(char *iden, struct program *prog){
+	print_compiler_error(prog, RED_C);
+	print_asterisk(RED_C, stderr);
+	fprintf(stderr, "\tThe literal '%s' is too large to represent!\n", iden);
+	prog->error_code = LIT_TOO_BIG;
+}
 
+void print_expected_literal(char *iden, struct program *prog){
+	print_compiler_error(prog, RED_C);
+	print_asterisk(RED_C, stderr);
+	fprintf(stderr, "\tExpected a literal, not '%s'!\n", iden);
+	prog->error_code = UNEXPECTED;
+}
+
+void print_expected_const(char *iden, struct program *prog){
+	print_compiler_error(prog, RED_C);
+	print_asterisk(RED_C, stderr);
+	fprintf(stderr, "\tExpected a constant definiton, not '%s'!\n", iden);
+	prog->error_code = UNEXPECTED;
+}
 
 
