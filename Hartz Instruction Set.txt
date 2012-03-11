@@ -44,12 +44,18 @@ Instruction Set:
 	- ADD 	<0101>
 		- Add
 		- add $source, $source2, $dest
-	- SW 	<0110>
+	- SW 	<01100>
 		- Store word to data ring
 		- sw $source
-	- LW 	<0111>
+	- SI	<01101>
+		- Store immediate onto data ring
+		- si literal/constant
+	- LW 	<01110>
 		- Load word from data ring
 		- lw $dest
+	- LI	<01111>
+		- Load Immediate into destination register
+		- li $dest
 	- BEZ 	<1000>
 		- Branch if equal to zero
 		- beq $source
@@ -61,12 +67,9 @@ Instruction Set:
 			- rotates by the specified value in the register
 		- rot (bit 6 = 0)
 			- implicitly rotates once
-	- LROT	<10011(0/1)>
+	- LROT	<10011>
 		- Rotates Data Ring by amount in next value on text ring
-		- lrot $multiplier_reg (bit 7 is register, bit 6 = 1)
-			- applies multiplier, then loads and performs rotate
-		- lrot (bit 7 ignored, bit 6 = 0)
-			- apply no multiplier
+		- lrot literal/constant
 	- LJMP 	<1010>
 		- Specifies that the next instruction is to be made a longer jump
 		- ljmp !multiplier
@@ -79,6 +82,17 @@ Instruction Set:
 	- NOP 	<11111>
 		- No Operation
 		- does nothing
+	- LFSJ	<111101>
+		- Load From, Substract, and Jump
+		- Loads the current value pointed at on the data ring, 
+			subtracts from next value on text ring, stores to jump register,
+			and jumps.
+		- Used to return from a function call.
+	- STJ	<1111110>
+		- Store To, and Jump
+		- Stores to the data ring the next value on the text ring, then stores
+			value after that in the jump register and jumps.
+		- Used to make a function call.
 
 Program Execution:
 	- Load instruction from text ring

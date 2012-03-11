@@ -12,7 +12,7 @@
 #define TEST_FILE	"test."
 
 // The highest test number (generally the range is the set of natural numbers)
-#define TEST_CNT	6
+#define TEST_CNT	7
 
 // The program we are testing
 #define	TRANS_EXEC	"./translator"

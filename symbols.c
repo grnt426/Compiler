@@ -14,7 +14,8 @@
 #include "idents.h"
 #include "strlib.h"
 
-void add_symbol(char *iden, int val, struct symbol_table *tbl, int pos){
+void add_symbol(char *iden, int val, struct symbol_table *tbl, int pos, 
+		short type){
 	if(!tbl)
 		return;
 	
@@ -24,6 +25,7 @@ void add_symbol(char *iden, int val, struct symbol_table *tbl, int pos){
 	sym->next = 0;
 	sym->pos = pos;
 	sym->used = 0;
+	sym->type = type;
 
 
 	if(tbl->r){
@@ -49,6 +51,19 @@ struct symbol *find_symbol(char *iden, struct symbol_table *tbl){
 	return sym;
 }
 
+struct symbol *find_symbol_at(int pos, struct symbol_table *tbl){
+	if(pos < 0)
+		return 0;
+	if(!tbl)
+		return 0;
+
+	struct symbol *sym = tbl->r;
+	while(sym && sym->pos != pos){
+		sym = sym->next;
+	}
+	return sym;
+}
+
 void print_symbol(struct symbol *sym, int c){
 
 	if(c > -1)
@@ -63,7 +78,9 @@ void print_symbol(struct symbol *sym, int c){
 		printf(	"Next:\t%p\n"
 				"Iden:\t%s\n"
 				"Val:\t%d\n"
-				"Used:\t%d\n", sym->next, sym->iden, sym->val, sym->used);
+				"Type:\t%d\n"
+				"Used:\t%d\n", sym->next, sym->iden, sym->val, sym->type,
+				sym->used);
 	}
 }
 
@@ -89,7 +106,7 @@ void print_symbol_not_found(const char *bad_sym, struct program *prog){
 	fprintf(stderr, "%s:\n", prog->input);
 	print_asterisk(RED_C, stderr);
 	fprintf(stderr, "\tUnknown Symbol '%s'.\n", bad_sym);
-	prog->error_code = -1; // TODO: create actual error_code 
+	prog->error_code = BAD_SYM; // TODO: create actual error_code 
 
 }
 
@@ -100,5 +117,22 @@ void print_symbol_not_used(const struct symbol *sym, const char *sym_type,
 	fprintf(stderr, "%s, %d:\n", prog->input, sym->pos);
 	print_asterisk(YLW_C, stderr);
 	fprintf(stderr, "\tWarning: %s '%s' is not used.\n", sym_type, sym->iden);
+}
+
+void print_non_func_call(const struct symbol *sym, struct program *prog,
+		int err_line){
+	print_asterisk(RED_C, stderr);
+	fprintf(stderr, "%s, %d:\n", prog->input, err_line);
+	print_asterisk(RED_C, stderr);
+	fprintf(stderr, "\tUnable to call a non-function, '%s'!\n", sym->iden);
+	prog->error_code = CALL_NON_F;
+}
+
+void print_return_from_non_func(int abs_pos, struct program *prog){
+	print_asterisk(RED_C, stderr);
+	fprintf(stderr, "%s, %d:\n", prog->input, abs_pos);
+	print_asterisk(RED_C, stderr);
+	fprintf(stderr, "\tUnable to return without a function declared first!\n");
+	prog->error_code = RET_NON_F;
 }
 
