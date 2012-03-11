@@ -235,7 +235,7 @@ int compare_results(int test_num){
 		if(strcmp(tline, oline)){
 			print_status(RED_C, 0, stdout);
 			printf("Line %d:\texpected '%s', but read '%s'!\n", 
-					line, tline, oline);
+					line+1, tline, oline);
 			failure = 1;
 		}
 		line++;
