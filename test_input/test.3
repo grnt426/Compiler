@@ -3,12 +3,12 @@
 
 #const 5
 
-lw	$d1
+lw	!0, $d1
 ROT1
-lw	$d2
+lw	!1, $d2
 ADD $s1, $s2, $d1
 ROT1
-SW $s1
+SW $s1, !0
 li const
 HALT
 *Done!

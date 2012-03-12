@@ -405,12 +405,24 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 		else if(fmt[c] == ']'){
 			or = 0;
 
+			#ifdef DEBUG
+				fprintf(stderr, "CHECKING FULFILLED OR COND...\n");
+				fprintf(stderr, "%p\n%s\n%d\n", tok, tok, reg);
+			#endif
+
 			// if all options failed, report parse error
-			if(!reg && !iden && !val){
+			if(reg == -1 && !iden && val == -1){
+				
+			
+				#ifdef DEBUG
+					fprintf(stderr, "OR COND FAILED!\n");
+				#endif
+
 				// TODO: create standardized error reporting....
 				print_compiler_error(prog, RED_C);
 				print_asterisk(RED_C, stderr);
-				fprintf(stderr, "\tUnexpected opcode argument.\n");
+				fprintf(stderr, "\tInsufficient or in correct opcode"
+						" argument.\n");
 				prog->error_code = GARBAGE;
 				return;
 			}
@@ -471,6 +483,9 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 					print_expected_literal(iden, prog);
 					return;
 				}
+				#ifdef DEBUG
+					fprintf(stderr, "kjhkjlkl\n");
+				#endif
 				iden = 0;
 			}
 			else{
@@ -487,14 +502,18 @@ void process_instruction(struct program *prog, char *opcode, const char *fmt,
 					#endif
 
 					// create the term and add to the end
-					struct Term *nt = create_term(numtob(val, WORD_SIZE), 
-							strlen(iden), 0);
+					char *trans = numtob(val, WORD_SIZE);
+					struct Term *nt = create_term(trans, strlen(trans), 0);
 					nt->trans = 1;
 					prog->term_count++;
 					nt->pos = prog->term_count;
+					#ifdef DEBUG
+						fprintf(stderr, "FINISHED LITERAL!\n");
+					#endif
 					prog->end_term->next_term = nt;
 					prog->end_term = nt;
 					nt->absolute_pos = prog->line_count;
+
 				}
 			}
 		}

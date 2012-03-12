@@ -7,13 +7,13 @@
 * Load some data, move to
 * storage loc, and save result
 START:
-LW $d1
+LW !0, $d1
 ROT1
 STJ	my_func
 ROT1
 ROT1
 ROT1
-SW $s2
+SW $s2, !4
 jmp END
 
 * Adds the two numbers

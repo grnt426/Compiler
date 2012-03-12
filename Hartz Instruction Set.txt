@@ -51,8 +51,8 @@ Instruction Set:
 		- Store immediate onto data ring
 		- si literal/constant
 	- LW 	<01110>
-		- Load word from data ring
-		- lw $dest
+		- Load word from position on data ring
+		- lw literal/constant, $dest
 	- LI	<01111>
 		- Load Immediate into destination register
 		- li $dest
